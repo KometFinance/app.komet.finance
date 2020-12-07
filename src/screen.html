@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+        <title>KOMET Finance - DeFi Decentralized Hedge Fund</title>
+        <meta name="description" content="Discover the new DeFi Decentralized Hedge Fund - $KOMET" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    </head>
+    <body class="dashboard position-relative">
+        <div class="overflow-hidden light_1"></div>
+        <div class="overflow-hidden light_2"></div>
+
+        <nav id="AppTopbar" class="pb-3 fixed-top bg_darknav">
+            <div class="d-flex justify-content-end">
+                <a class="mr-auto navbar-brand" href="#">
+                    <img src="img/applogo.svg" width="30" class="align-top d-inline-block" alt="" loading="lazy" />
+                    <span class="sr-only">Komet</span>
+                </a>
+
+                <div class="ml-auto mr-4 card">
+                    <div class="py-1 align-items-center card-body d-flex">
+                        <img src="img/metamaskFox.svg" alt="" width="26" class="mr-2" />
+                        <a
+                            data-toggle="modal"
+                            data-target="#Address"
+                            class="d-inline-block stretched-link text-truncate"
+                            style="max-width: 120px"
+                            >0x6cfb6df56bbdb00226aeffcdb2cd1fe8da1abda7</a
+                        >
+                    </div>
+                </div>
+
+                <ul class="mb-0 mr-2 list-inline list-unstyled align-items-center d-flex">
+                    <li class="list-inline-item">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-dark d-flex align-items-center"
+                            data-toggle="modal"
+                            data-target="#LPmodal"
+                        >
+                            <span class="mr-2 badge badge-lp"></span> 37.8 <small class="ml-2 text-muted">LP</small>
+                        </button>
+                    </li>
+                    <li class="list-inline-item">
+                        <button type="button" class="btn btn-sm btn-dark d-flex align-items-center">
+                            <span class="mr-2 badge badge-komet"></span> 12.8
+                            <small class="ml-2 text-muted">KOMET</small>
+                        </button>
+                    </li>
+                    <li class="list-inline-item">
+                        <button type="button" class="btn btn-sm btn-dark d-flex align-items-center">
+                            <span class="mr-2 badge badge-nova"></span> 87.8 <small class="ml-2 text-muted">NOVA</small>
+                        </button>
+                    </li>
+                    <li class="list-inline-item">
+                        <button type="button" class="btn btn-sm btn-dark d-flex align-items-center">
+                            <span class="mr-2 badge badge-eth"></span> 0.8 <small class="ml-2 text-muted">ETH</small>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div id="dashboard" class="old container-fluid">
+            <div id="Notification" class="position-absolute">
+                <div class="toast fade" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <div class="spinner-border spinner-border-sm text-info" role="status">
+                            <span class="sr-only">Processing...</span>
+                        </div>
+
+                        <strong class="ml-2 mr-auto text-info">Processing...</strong>
+                        <small>1 min ago</small>
+                        <button type="button" class="mb-1 ml-2 close" data-dismiss="toast" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="toast-body">
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-start align-items-center">
+                                Stake 12 KOMET/ETH LP Tokens
+                            </li>
+                            <li class="list-group-item d-flex justify-content-start align-items-center">
+                                <a
+                                    href="https://etherscan.io/token/0x6cfb6df56bbdb00226aeffcdb2cd1fe8da1abda7?a"
+                                    title="Placeholder link title"
+                                    class="text-muted"
+                                >
+                                    <svg
+                                        width="1em"
+                                        height="1em"
+                                        viewBox="0 0 16 16"
+                                        class="bi bi-box-arrow-in-up-right"
+                                        fill="currentColor"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M6.364 13.5a.5.5 0 0 0 .5.5H13.5a1.5 1.5 0 0 0 1.5-1.5v-10A1.5 1.5 0 0 0 13.5 1h-10A1.5 1.5 0 0 0 2 2.5v6.636a.5.5 0 1 0 1 0V2.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5H6.864a.5.5 0 0 0-.5.5z"
+                                        ></path>
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M11 5.5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793l-8.147 8.146a.5.5 0 0 0 .708.708L10 6.707V10.5a.5.5 0 0 0 1 0v-5z"
+                                        ></path>
+                                    </svg>
+                                    View on Etherscan
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="toast fade" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <svg
+                            width="1em"
+                            height="1em"
+                            viewBox="0 0 16 16"
+                            class="bi bi-check2-square text-primary"
+                            fill="currentColor"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M15.354 2.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L8 9.293l6.646-6.647a.5.5 0 0 1 .708 0z"
+                            />
+                            <path
+                                fill-rule="evenodd"
+                                d="M1.5 13A1.5 1.5 0 0 0 3 14.5h10a1.5 1.5 0 0 0 1.5-1.5V8a.5.5 0 0 0-1 0v5a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5h8a.5.5 0 0 0 0-1H3A1.5 1.5 0 0 0 1.5 3v10z"
+                            />
+                        </svg>
+
+                        <strong class="ml-2 mr-auto text-primary">Success</strong>
+                        <small>2 mins ago</small>
+                        <button type="button" class="mb-1 ml-2 close" data-dismiss="toast" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="toast-body">
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-start align-items-center">
+                                Stake 12 KOMET/ETH LP Tokens
+                            </li>
+                            <li class="list-group-item d-flex justify-content-start align-items-center">
+                                <a
+                                    href="https://etherscan.io/token/0x6cfb6df56bbdb00226aeffcdb2cd1fe8da1abda7?a"
+                                    title="Placeholder link title"
+                                    class="text-muted"
+                                >
+                                    <svg
+                                        width="1em"
+                                        height="1em"
+                                        viewBox="0 0 16 16"
+                                        class="bi bi-box-arrow-in-up-right"
+                                        fill="currentColor"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M6.364 13.5a.5.5 0 0 0 .5.5H13.5a1.5 1.5 0 0 0 1.5-1.5v-10A1.5 1.5 0 0 0 13.5 1h-10A1.5 1.5 0 0 0 2 2.5v6.636a.5.5 0 1 0 1 0V2.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5H6.864a.5.5 0 0 0-.5.5z"
+                                        ></path>
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M11 5.5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793l-8.147 8.146a.5.5 0 0 0 .708.708L10 6.707V10.5a.5.5 0 0 0 1 0v-5z"
+                                        ></path>
+                                    </svg>
+                                    View on Etherscan
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STAKING ON -->
+            <div class="row">
+                <div class="col-12 col-md-12 col-lg-10 mx-lg-auto">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-5 card Appboard">
+                                <div class="p-4 card-body d-flex align-items-center liqui">
+                                    <div class="mr-auto">
+                                        <h4 class="mb-0 text-center text-white gradient_lp">
+                                            <span
+                                                >12<small
+                                                    >.8976 <span class="text-muted">KOMET/ETH LP</span></small
+                                                ></span
+                                            >
+                                        </h4>
+                                        <span class="text-muted">Total balance</span>
+                                    </div>
+
+                                    <div class="ml-auto btn-liqui d-flex justify-content-end">
+                                        <button type="submit" class="btn btn-outline-primary">
+                                            <svg
+                                                width="1em"
+                                                height="1em"
+                                                viewBox="0 0 16 16"
+                                                class="mr-2 bi bi-box-arrow-up-right"
+                                                fill="currentColor"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                            >
+                                                <path
+                                                    fill-rule="evenodd"
+                                                    d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"
+                                                />
+                                                <path
+                                                    fill-rule="evenodd"
+                                                    d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"
+                                                />
+                                            </svg>
+                                            Add liquidity
+                                        </button>
+
+                                        <div class="ml-3 d-flex justify-content-end">
+                                            <button
+                                                type="submit"
+                                                class="btn btn-primary"
+                                                data-toggle="modal"
+                                                data-target="#StackingModal"
+                                            >
+                                                <svg
+                                                    width="1em"
+                                                    height="1em"
+                                                    viewBox="0 0 16 16"
+                                                    class="bi bi-gem"
+                                                    fill="currentColor"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                >
+                                                    <path
+                                                        fill-rule="evenodd"
+                                                        d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.1 5.3a.5.5 0 0 1 0-.6l3-4zm11.386 3.785l-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004l.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495l5.062-.005L8 13.366 5.47 5.495zm-1.371-.999l-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l2.92-.003 2.193 6.82L1.5 5.5zm7.889 6.817l2.194-6.828 2.929-.003-5.123 6.831z"
+                                                    />
+                                                </svg>
+                                                Start staking
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 col-sm-12 col-md-4 d-flex align-self-stretch">
+                            <div id="Stats" class="my-3 card Appboard my-md-0 w-100">
+                                <div class="p-4 card-body">
+                                    <h3 class="mb-0 text-center text-white card-title">Staking info</h3>
+                                    <p class="text-center text-muted"><small>Statistics about staking</small></p>
+
+                                    <div class="pt-3 d-flex align-self-center flex-column">
+                                        <ul class="mt-4 list-unstyled">
+                                            <li>Your active KOMET/ETH LP staked</li>
+                                            <li class="text-primary">
+                                                12<small
+                                                    >.0987654 KOMET/ETH LP
+                                                    <span class="text-muted">(1.2% of total)</span></small
+                                                >
+                                            </li>
+                                        </ul>
+
+                                        <hr />
+
+                                        <ul class="list-unstyled">
+                                            <li>Total KOMET/ETH LP staked</li>
+                                            <li class="text-muted">12987<small>.0987654 KOMET/ETH LP</small></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <!-- /card-body -->
+                            </div>
+                            <!-- /card -->
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-md-4 d-flex align-self-stretch">
+                            <div id="Reward" class="my-3 card Appboard my-md-0 w-100">
+                                <div class="p-4 card-body">
+                                    <h3 class="mb-0 text-center text-white card-title">Staking reward</h3>
+                                    <p class="text-center text-muted"><small>Pending NOVA Reward</small></p>
+
+                                    <div class="my-5 d-block position-relative" style="height: 10em">
+                                        <div class="Plasma position-absolute">
+                                            <p class="mb-0 text-center amount lead">1179<small>.98</small></p>
+                                        </div>
+                                        <svg class="electric-loader" viewBox="0 0 100 100">
+                                            <defs>
+                                                <filter id="goo">
+                                                    <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+                                                    <feColorMatrix
+                                                        in="blur"
+                                                        mode="matrix"
+                                                        values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 17 -2.15"
+                                                        result="goo"
+                                                    />
+                                                    <feComposite in="SourceGraphic" in2="goo" operator="over" />
+                                                </filter>
+                                            </defs>
+                                            <g filter="url(#goo)"></g>
+                                        </svg>
+                                    </div>
+
+                                    <button type="submit" class="mt-3 btn btn-outline-primary btn-block">
+                                        Withdraw earnings
+                                    </button>
+                                </div>
+                                <!-- /card-body -->
+                            </div>
+                            <!-- /card -->
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-md-4 d-flex align-self-stretch">
+                            <div id="PlasmaPower" class="my-3 card Appboard my-md-0 w-100">
+                                <div class="p-4 card-body">
+                                    <h3 class="mb-0 text-center card-title">PlasmaPower</h3>
+                                    <p class="text-center text-muted"><small>Your staking fidelity</small></p>
+                                </div>
+                                <!-- /card-body -->
+                            </div>
+                            <!-- /card -->
+                        </div>
+                    </div>
+                </div>
+                <!-- /col-12 -->
+            </div>
+            <!-- /row -->
+            <!-- /STAKING ON -->
+
+            <!-- STEP 0 - WALLET LOCKED -->
+            <div class="row d-none">
+                <div class="mx-auto col-12 col-md-6">
+                    <div class="mx-auto card Appboard" style="width: 28rem">
+                        <div class="p-5 text-center card-body">
+                            <h3 class="card-title">Unlock your wallet</h3>
+                            <svg
+                                width="5em"
+                                height="5em"
+                                viewBox="0 0 16 16"
+                                class="my-5 bi bi-shield-lock-fill text-muted"
+                                fill="currentColor"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M8 .5c-.662 0-1.77.249-2.813.525a61.11 61.11 0 0 0-2.772.815 1.454 1.454 0 0 0-1.003 1.184c-.573 4.197.756 7.307 2.368 9.365a11.192 11.192 0 0 0 2.417 2.3c.371.256.715.451 1.007.586.27.124.558.225.796.225s.527-.101.796-.225c.292-.135.636-.33 1.007-.586a11.191 11.191 0 0 0 2.418-2.3c1.611-2.058 2.94-5.168 2.367-9.365a1.454 1.454 0 0 0-1.003-1.184 61.09 61.09 0 0 0-2.772-.815C9.77.749 8.663.5 8 .5zm.5 7.415a1.5 1.5 0 1 0-1 0l-.385 1.99a.5.5 0 0 0 .491.595h.788a.5.5 0 0 0 .49-.595L8.5 7.915z"
+                                />
+                            </svg>
+
+                            <button type="submit" class="mb-0 btn btn-block btn-primary">Unlock wallet</button>
+                        </div>
+                        <!-- /card-body -->
+                    </div>
+                    <!-- /card -->
+                </div>
+                <!-- /col-12 -->
+            </div>
+            <!-- /row -->
+            <!-- /STEP 0 - WALLET LOCKED -->
+
+            <!-- STEP 2 -->
+            <div class="row d-none">
+                <div class="mx-auto col-12 col-md-6">
+                    <div class="mx-auto card Appboard" style="width: 28rem">
+                        <div class="progress">
+                            <div
+                                class="progress-bar bg-primary"
+                                role="progressbar"
+                                style="width: 50%"
+                                aria-valuenow="25"
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                            ></div>
+                        </div>
+                        <div class="p-5 card-body">
+                            <h3 class="text-center card-title">KOMET/ETH LP tokens</h3>
+                            <p class="mt-4 mb-0 text-center lead gradient_lp">19.90</p>
+                            <p class="text-center text-muted"><small>Available amount</small></p>
+
+                            <form class="pt-4">
+                                <div class="form-group">
+                                    <section class="py-5 d-block">
+                                        <div class="pt-4 loader">
+                                            <div class="dot dot-1"></div>
+                                            <div class="dot dot-2"></div>
+                                            <div class="dot dot-3"></div>
+                                        </div>
+                                    </section>
+
+                                    <button type="submit" class="mt-5 mb-0 btn btn-block btn-primary" disabled>
+                                        Waiting for approval...
+                                    </button>
+                                </div>
+                                <!-- /form-group -->
+                            </form>
+                        </div>
+                        <!-- /card-body -->
+                    </div>
+                    <!-- /card -->
+                </div>
+                <!-- /col-12 -->
+            </div>
+            <!-- /row -->
+            <!-- /STEP 2 -->
+
+            <!-- STEP 3 -->
+            <div class="row d-none">
+                <div class="mx-auto col-12 col-md-6">
+                    <div class="mx-auto card Appboard" style="width: 28rem">
+                        <div class="progress">
+                            <div
+                                class="progress-bar bg-primary"
+                                role="progressbar"
+                                style="width: 100%"
+                                aria-valuenow="25"
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                            ></div>
+                        </div>
+                        <div class="p-5 card-body">
+                            <h3 class="text-center card-title">Selected amount</h3>
+                            <h4 class="mt-4 mb-2 text-center gradient_lp display-3">12.9</h4>
+                            <p class="mb-5 text-center text-muted">
+                                <small>Amount of KOMET/ETH LP tokens ready to stake</small>
+                            </p>
+
+                            <button type="submit" class="mb-4 btn btn-block btn-dark">Cancel</button>
+                            <button type="submit" class="mb-0 btn btn-block btn-primary">Start staking</button>
+                        </div>
+                        <!-- /card-body -->
+                    </div>
+                    <!-- /card -->
+                </div>
+                <!-- /col-12 -->
+            </div>
+            <!-- /row -->
+            <!-- /STEP 3 -->
+
+            <div class="container pt-2 mt-5 pt-md-5">
+                <footer class="col-12">
+                    <div class="bottombar col-12"></div>
+                    <nav class="col-12 navbar navbar-expand-lg navbar-light">
+                        <div class="ml-auto">
+                            <ul class="list-inline">
+                                <li class="mr-0 list-inline-item">
+                                    <a
+                                        class="nav-link text-primary"
+                                        target="_blank"
+                                        href="https://financekomet.medium.com"
+                                    >
+                                        <img src="img/medium.svg" width="26" /><span class="sr-only">Medium</span>
+                                    </a>
+                                </li>
+                                <li class="mr-0 list-inline-item">
+                                    <a
+                                        class="nav-link text-primary"
+                                        target="_blank"
+                                        href="https://t.me/KometFinanceCommunit"
+                                    >
+                                        <img src="img/telegram.svg" width="26" /><span class="sr-only">Télégram</span>
+                                    </a>
+                                </li>
+                                <li class="mr-0 list-inline-item">
+                                    <a
+                                        class="nav-link text-primary"
+                                        target="_blank"
+                                        href="https://twitter.com/FinanceKomet"
+                                    >
+                                        <img src="img/twitter.svg" width="26" /><span class="sr-only">Twitter</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </nav>
+                </footer>
+            </div>
+        </div>
+        <!-- /#dashboard -->
+
+        <!-- modal -->
+        <div class="modal fade" id="LPmodal" tabindex="-1" aria-labelledby="connect" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="text-center modal-body">
+                        <img src="img/kometlptoken.svg" class="mb-4 img-fluid" alt="Komet token" width="100" />
+
+                        <h3 class="mb-4 text-center text-dark text-uppercase">Komet/ETH LP</h3>
+
+                        <ul class="list-group text-dark">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Your balance
+                                <div class="text-align-end d-flex flex-column">
+                                    <strong>12.9876543454678</strong>
+                                    <small class="text-right text-black-50">($ 840.98)</small>
+                                </div>
+                            </li>
+
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Contract
+                                <span
+                                    class="badge badge-primary badge-pill"
+                                    value="0x6cfb6df56bbdb00226aeffcdb2cd1fe8da1abda7"
+                                    id="contract-address"
+                                    >0x6cfb6df56bbdb00226aeffcdb2cd1fe8da1abda7</span
+                                >
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a title="Placeholder link title" class="mr-auto text-dark" onclick="copyToClip()">
+                                    <svg
+                                        width="1em"
+                                        height="1em"
+                                        viewBox="0 0 16 16"
+                                        class="bi bi-stickies"
+                                        fill="currentColor"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M0 1.5A1.5 1.5 0 0 1 1.5 0H13a1 1 0 0 1 1 1H1.5a.5.5 0 0 0-.5.5V14a1 1 0 0 1-1-1V1.5z"
+                                        ></path>
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M2 3.5A1.5 1.5 0 0 1 3.5 2h11A1.5 1.5 0 0 1 16 3.5v6.086a1.5 1.5 0 0 1-.44 1.06l-4.914 4.915a1.5 1.5 0 0 1-1.06.439H3.5A1.5 1.5 0 0 1 2 14.5v-11zM3.5 3a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h6.086a.5.5 0 0 0 .353-.146l4.915-4.915A.5.5 0 0 0 15 9.586V3.5a.5.5 0 0 0-.5-.5h-11z"
+                                        ></path>
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M10.5 10a.5.5 0 0 0-.5.5v5H9v-5A1.5 1.5 0 0 1 10.5 9h5v1h-5z"
+                                        ></path>
+                                    </svg>
+                                    Copy address
+                                    <span id="copied">✓</span>
+                                </a>
+
+                                <a
+                                    href="https://etherscan.io/token/0x6cfb6df56bbdb00226aeffcdb2cd1fe8da1abda7?a"
+                                    title="Placeholder link title"
+                                    class="ml-auto text-dark"
+                                >
+                                    <svg
+                                        width="1em"
+                                        height="1em"
+                                        viewBox="0 0 16 16"
+                                        class="bi bi-box-arrow-in-up-right"
+                                        fill="currentColor"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M6.364 13.5a.5.5 0 0 0 .5.5H13.5a1.5 1.5 0 0 0 1.5-1.5v-10A1.5 1.5 0 0 0 13.5 1h-10A1.5 1.5 0 0 0 2 2.5v6.636a.5.5 0 1 0 1 0V2.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5H6.864a.5.5 0 0 0-.5.5z"
+                                        ></path>
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M11 5.5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793l-8.147 8.146a.5.5 0 0 0 .708.708L10 6.707V10.5a.5.5 0 0 0 1 0v-5z"
+                                        ></path>
+                                    </svg>
+                                    View on Etherscan
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /modal -->
+
+        <!-- modal -->
+        <div
+            class="modal fade"
+            id="StackingModal"
+            tabindex="-1"
+            aria-labelledby="connect"
+            aria-hidden="true"
+            data-backdrop="static"
+            data-keyboard="false"
+        >
+            <div class="modal-dialog">
+                <div class="bg-transparent modal-content">
+                    <div class="modal-header">
+                        <button
+                            id="StackingModalButton"
+                            type="button"
+                            class="close"
+                            data-dismiss="modal"
+                            aria-label="Close"
+                        >
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="p-0 text-center modal-body">
+                        <!-- STEP 1 -->
+                        <div class="mx-auto card Appboard">
+                            <div class="p-5 card-body">
+                                <h3 class="text-center card-title">Staking KOMET/ETH LP tokens</h3>
+                                <p class="mt-4 mb-0 text-center lead gradient_lp">19.90</p>
+                                <p class="text-center text-muted"><small>Amount available</small></p>
+
+                                <form class="pt-4">
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <input
+                                                type="number"
+                                                class="form-control bg-dark"
+                                                placeholder="0.0"
+                                                value=""
+                                                aria-label="Amount"
+                                                aria-describedby=""
+                                            />
+                                            <div class="input-group-append">
+                                                <button class="btn btn-secondary" type="button" id="button-addon2">
+                                                    Max
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <small id="" class="py-2 form-text text-muted"
+                                            >Amount of KOMET/ETH LP tokens you want to stake</small
+                                        >
+                                        <button type="submit" class="mt-5 mb-0 btn btn-block btn-primary">
+                                            Approve contract
+                                        </button>
+                                    </div>
+                                    <!-- /form-group -->
+                                </form>
+                            </div>
+                            <!-- /card-body -->
+                        </div>
+                        <!-- /card -->
+                        <!-- /STEP 1 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+            <defs>
+                <filter id="goo">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+                    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 21 -7" />
+                </filter>
+            </defs>
+        </svg>
+
+        <script src="/old.ts"></script>
+
+        <script>
+            var svgns = 'http://www.w3.org/2000/svg';
+            var twoPI = Math.PI * 2;
+
+            function ElectricLine(radius = 48, startOffset = 0) {
+                var path = document.createElementNS(svgns, 'path');
+
+                var coords = [];
+                var centerX = 50;
+                var centerY = 50;
+
+                for (var i = 0; i <= twoPI + 0.1; i += 0.1) {
+                    coords.push(
+                        centerX + Math.sin(i + startOffset) * radius,
+                        centerY + Math.cos(i + startOffset) * radius
+                    );
+                }
+
+                // Slightly randomize the points
+                function updateElectricLine() {
+                    path.setAttribute(
+                        'd',
+                        coords
+                            .map((point, i) => {
+                                return (
+                                    (i == 0 ? 'M' : i % 2 == 0 ? 'L' : ',') +
+                                    Math.round((point + Math.random() * 3) * 100) / 100
+                                );
+                            })
+                            .join('')
+                    );
+                }
+
+                path.style.animationDelay = '0s, ' + -Math.random() + 's';
+                //path.style.animationDuration = (1.5 + Math.random()) + 's, ' + 0.2 + ( Math.random() * 0.4 ) + 's';
+
+                updateElectricLine();
+
+                // Have to get it in the dom for `getTotalLength` to work
+                var tempSVG = document.createElementNS(svgns, 'svg');
+                tempSVG.appendChild(path);
+                document.body.appendChild(tempSVG);
+
+                // Get the line length
+                var length = path.getTotalLength();
+                document.body.removeChild(tempSVG);
+
+                // Set an accurate strokeDasharray & offset for the animation
+                path.style.strokeDasharray = length / 2; //( length * 0.48 ) + ' ' + ( length * 0.52 );
+                path.style.strokeDashoffset = -length;
+
+                return {
+                    el: path,
+                    update: updateElectricLine,
+                };
+            }
+
+            var lines = [
+                new ElectricLine(35, Math.PI * 0.0),
+                new ElectricLine(34.5, Math.PI * 1.0),
+                new ElectricLine(34, Math.PI * 0.25),
+                new ElectricLine(33.5, Math.PI * 1.25),
+                new ElectricLine(33, Math.PI * 0.5),
+                new ElectricLine(32.5, Math.PI * 1.5),
+            ];
+
+            var svg = document.querySelector('.electric-loader g');
+            lines.forEach(line => {
+                svg.appendChild(line.el);
+            });
+
+            var t = 0;
+            function update() {
+                requestAnimationFrame(update);
+                if (t % 7 == 0) {
+                    lines.forEach(line => {
+                        line.update();
+                    });
+                }
+                t++;
+            }
+
+            update();
+        </script>
+    </body>
+</html>

@@ -1,0 +1,12 @@
+@tailwind base;
+
+@tailwind components;
+
+@tailwind utilities;
+
+.btn.btn-outline-primary img.filter {
+    filter: invert(97%) sepia(10%) saturate(2216%) hue-rotate(71deg) brightness(103%) contrast(100%);
+}
+.btn.btn-outline-primary:hover img.filter {
+    filter: invert(0%) sepia(83%) saturate(7432%) hue-rotate(210deg) brightness(88%) contrast(88%);
+}
