@@ -35,7 +35,7 @@ jobs:
         node-version: 15.x
 
     - name: to cache or not to cache...
-      run: echo ${{ steps.yarn-cache.output.cache-hit != 'true' }}
+      run: echo ${{ steps.yarn-cache.output.cache-hit }}
 
     - name: install dependencies
       if: steps.yarn-cache.output.cache-hit != 'true'
