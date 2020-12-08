@@ -1,0 +1,93 @@
+name: CI and build for the website
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  lint:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+
+    - name: Cache dependencies
+      id: yarn-cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Use Node.js 15
+      uses: actions/setup-node@v1
+      with:
+        node-version: 15.x
+
+    - name: to cache or not to cache...
+      run: echo ${{ steps.yarn-cache.output.cache-hit != 'true' }}
+
+    - name: install dependencies
+      if: steps.yarn-cache.output.cache-hit != 'true'
+      run: yarn  --frozen-lockfile
+
+    - run: yarn build:prod
+      env:
+        NODE_ENV: production
+        KOMET: ${{ secrets.KOMET }}
+        LP: ${{ secrets.LP }}
+        NOVA: ${{ secrets.NOVA }}
+        MU: ${{ secrets.MU }}
+    - run: yarn lint
+
+  deploy:
+    needs: lint
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+
+    - name: Cache dependencies
+      id: yarn-cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Use Node.js 15
+      uses: actions/setup-node@v1
+      with:
+        node-version: 15.x
+
+    - name: install dependencies
+      if: steps.yarn-cache.output.cache-hit != 'true'
+      run: yarn  --frozen-lockfile
+
+    - run: yarn build:prod
+
+    - run: pwd
+
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        allow_empty_commit: true
+        publish_dir: ./dist
+        # cname: komet.finance
+

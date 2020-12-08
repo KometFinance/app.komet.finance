@@ -3,7 +3,7 @@ module View.Gauge exposing (view)
 import Html exposing (Html, node, text)
 import Html.Attributes exposing (attribute, id)
 import Svg exposing (g, path, svg)
-import Svg.Attributes exposing (d, fill, viewBox)
+import Svg.Attributes exposing (d, fill, stroke, viewBox)
 
 
 view : Int -> Int -> Html msg
@@ -21,13 +21,15 @@ view currentPower maxPower =
                         [ path
                             [ d "M172.965116,0 C262.708461,0 335.823283,78.3770684 338.91014,176.345031 L331.566262,176.345031 C328.481729,82.8788581 258.653906,8.1496519 172.965116,8.1496519 C87.2763264,8.1496519 17.4485036,82.8788581 14.3639708,176.345031 L7.02009236,176.345031 C10.10695,78.3770684 83.2217717,0 172.965116,0 Z"
                             , fill "#76FFBA"
+                            , stroke "#76FFBA"
                             , id "Path"
                             ]
                             []
                         , path
                             [ d "M204.744929,37.5690548 L204.745278,180.543047 C207.571167,180.804641 209.790432,183.406919 209.790432,186.578541 C209.790432,189.923797 207.321524,192.635663 204.275972,192.635663 C201.23042,192.635663 198.761512,189.923797 198.761512,186.578541 C198.761512,183.515631 200.831248,180.983704 203.518285,180.578125 L203.519493,37.5690548 L204.744929,37.5690548 Z"
                             , id "arrow"
-                            , attribute "stroke" "#76FFBA"
+                            , stroke "#76FFBA"
+                            , fill "#76FFBA"
                             , attribute "transform" <| "translate(204.275972, 115.102359) rotate(-330.00000) translate(-204.275972, -115.102359) "
                             ]
                             []

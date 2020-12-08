@@ -2,29 +2,49 @@ import Web3 from 'web3'
 import { provider } from 'web3-core'
 import { AbiItem } from 'web3-utils'
 import ERC20ABI from '../../abis/ERC20.json'
-import UNIVERSE from '../../../abis/MasterUniverse.json'
+import UNIVERSE from '../../abis/MasterUniverse.json'
 // eslint-disable-next-line no-unused-vars
 import debug from './debug'
 
 export const getERC20Contract = (prov: provider, address: string) => {
   const web3 = new Web3(prov)
-  const contract = new web3.eth.Contract((ERC20ABI.abi as unknown) as AbiItem, address)
+  const contract = new web3.eth.Contract(
+    (ERC20ABI.abi as unknown) as AbiItem,
+    address
+  )
   return contract
 }
 
-export const getBalance = async (prov: provider, tokenAddress: string, userAddress: string): Promise<string> => {
+export const getBalance = async (
+  prov: provider,
+  tokenAddress: string,
+  userAddress: string
+): Promise<string> => {
   const contract = getERC20Contract(prov, tokenAddress)
   try {
-    const balance: string = await contract.methods.balanceOf(userAddress).call()
+    const balance: string = await contract.methods
+      .balanceOf(userAddress)
+      .call()
     return balance
   } catch (_) {
     return '0'
   }
 }
 
-export type Addresses = { komet: string; lp: string; nova: string; universe: string };
+export type Addresses = {
+  komet: string;
+  lp: string;
+  nova: string;
+  universe: string;
+};
 
-export type AccountInfo = { account: string; eth: string; komet: string; lp: string; nova: string };
+export type AccountInfo = {
+  account: string;
+  eth: string;
+  komet: string;
+  lp: string;
+  nova: string;
+};
 
 export const getAccountInfo = async (
   prov: provider,
@@ -33,7 +53,9 @@ export const getAccountInfo = async (
 ): Promise<AccountInfo> => {
   const web3 = new Web3(prov)
 
-  const allAccounts = withRequest ? await web3.eth.requestAccounts() : await web3.eth.getAccounts()
+  const allAccounts = withRequest
+    ? await web3.eth.requestAccounts()
+    : await web3.eth.getAccounts()
 
   const userAddress = allAccounts[0]
   if (!userAddress) {
@@ -47,9 +69,12 @@ export const getAccountInfo = async (
   return { account: userAddress, eth, komet, lp, nova }
 }
 
-export const monitorChanges = (prov: provider, onAccountsChanged: (withRequest: boolean) => void) => {
+export const monitorChanges = (
+  prov: provider,
+  onAccountsChanged: (withRequest: boolean) => void
+) => {
   const web3 = new Web3(prov)
-  web3.currentProvider.on('chainChanged', _ => {
+  web3.currentProvider.on('chainChanged', (_) => {
     location.reload()
   })
   web3.currentProvider.on('accountsChanged', (accounts: any[]) => {
@@ -62,9 +87,9 @@ export const monitorChanges = (prov: provider, onAccountsChanged: (withRequest: 
 }
 
 export type StakingInfo = {
-    lastStakedTime: string;
-    amount: string;
-    rewardDebt: string;
+  lastStakedTime: string;
+  amount: string;
+  rewardDebt: string;
 };
 
 export const requestUserStakingInfo = async (
@@ -73,7 +98,10 @@ export const requestUserStakingInfo = async (
   userAddress: string
 ): Promise<StakingInfo> => {
   const web3 = new Web3(prov)
-  const universeContract = new web3.eth.Contract((UNIVERSE.abi as unknown) as AbiItem, universeAddress)
+  const universeContract = new web3.eth.Contract(
+    (UNIVERSE.abi as unknown) as AbiItem,
+    universeAddress
+  )
   return await universeContract.methods.userInfo('0', userAddress).call()
 }
 
@@ -90,9 +118,14 @@ export const requestReward = async (
   }
   isRunningAlready = true
   const web3 = new Web3(prov)
-  const universeContract = new web3.eth.Contract((UNIVERSE.abi as unknown) as AbiItem, universeAddress)
+  const universeContract = new web3.eth.Contract(
+    (UNIVERSE.abi as unknown) as AbiItem,
+    universeAddress
+  )
   try {
-    const pending = await universeContract.methods.pendingNova('0', userAddress).call()
+    const pending = await universeContract.methods
+      .pendingNova('0', userAddress)
+      .call()
     isRunningAlready = false
     return { pending }
   } catch (err) {
@@ -103,22 +136,28 @@ export const requestReward = async (
 
 export type StakingState = { totalLpStaked: string };
 
-export const requestGeneralStakingInfo = async (prov: provider, universeAddress: string): Promise<StakingState> => {
+export const requestGeneralStakingInfo = async (
+  prov: provider,
+  universeAddress: string
+): Promise<StakingState> => {
   const web3 = new Web3(prov)
-  const universeContract = new web3.eth.Contract((UNIVERSE.abi as unknown) as AbiItem, universeAddress)
+  const universeContract = new web3.eth.Contract(
+    (UNIVERSE.abi as unknown) as AbiItem,
+    universeAddress
+  )
   return await universeContract.methods.poolInfo('0').call()
 }
 
 export type ContractApprovalArg = {
-    prov: provider;
-    universeAddress: string;
-    lpAddress: string;
-    userAddress: string;
-    amount: string;
+  prov: provider;
+  universeAddress: string;
+  lpAddress: string;
+  userAddress: string;
+  amount: string;
 };
 
 export type Transaction = {
-    tx: string;
+  tx: string;
 };
 
 export const askContractApproval = async ({
@@ -129,39 +168,70 @@ export const askContractApproval = async ({
   amount
 }: ContractApprovalArg): Promise<Transaction> => {
   const lpContract = getERC20Contract(prov, lpAddress)
-  return await lpContract.methods.approve(universeAddress, amount).send({ from: userAddress })
+  return await lpContract.methods
+    .approve(universeAddress, amount)
+    .send({ from: userAddress })
 }
 
 export type DepositArg = {
-    prov: provider;
-    universeAddress: string;
-    userAddress: string;
-    amount: string;
+  prov: provider;
+  universeAddress: string;
+  userAddress: string;
+  amount: string;
 };
 
-export const deposit = async ({ prov, universeAddress, userAddress, amount }: DepositArg): Promise<Transaction> => {
+export const deposit = async ({
+  prov,
+  universeAddress,
+  userAddress,
+  amount
+}: DepositArg): Promise<Transaction> => {
   const web3 = new Web3(prov)
-  const universeContract = new web3.eth.Contract((UNIVERSE.abi as unknown) as AbiItem, universeAddress)
-  return await universeContract.methods.deposit('0', amount).send({ from: userAddress })
+  const universeContract = new web3.eth.Contract(
+    (UNIVERSE.abi as unknown) as AbiItem,
+    universeAddress
+  )
+  return await universeContract.methods
+    .deposit('0', amount)
+    .send({ from: userAddress })
 }
 
 export type WithdrawArg = {
-    prov: provider;
-    universeAddress: string;
-    userAddress: string;
-    amount: string;
+  prov: provider;
+  universeAddress: string;
+  userAddress: string;
+  amount: string;
 };
 
-export const withdraw = async ({ prov, universeAddress, userAddress, amount }: WithdrawArg): Promise<Transaction> => {
+export const withdraw = async ({
+  prov,
+  universeAddress,
+  userAddress,
+  amount
+}: WithdrawArg): Promise<Transaction> => {
   const web3 = new Web3(prov)
-  const universeContract = new web3.eth.Contract((UNIVERSE.abi as unknown) as AbiItem, universeAddress)
-  return await universeContract.methods.withdraw('0', amount).send({ from: userAddress })
+  const universeContract = new web3.eth.Contract(
+    (UNIVERSE.abi as unknown) as AbiItem,
+    universeAddress
+  )
+  return await universeContract.methods
+    .withdraw('0', amount)
+    .send({ from: userAddress })
 }
 
-export const getBuffRate = async (prov: provider, universeAddress: string, userAddress: string) => {
+export const getBuffRate = async (
+  prov: provider,
+  universeAddress: string,
+  userAddress: string
+) => {
   const web3 = new Web3(prov)
-  const universeContract = new web3.eth.Contract((UNIVERSE.abi as unknown) as AbiItem, universeAddress)
-  const max = await universeContract.methods.maxBuffRate('0', userAddress).call()
+  const universeContract = new web3.eth.Contract(
+    (UNIVERSE.abi as unknown) as AbiItem,
+    universeAddress
+  )
+  const max = await universeContract.methods
+    .maxBuffRate('0', userAddress)
+    .call()
   debug('max -> ', max)
   const current = await universeContract.methods
     .calculateBuffRate('0', userAddress, Math.floor(Date.now() / 1000))
@@ -170,10 +240,19 @@ export const getBuffRate = async (prov: provider, universeAddress: string, userA
   return { max, current }
 }
 
-export const calculateFees = async (prov: provider, universeAddress: string, userAddress: string) => {
+export const calculateFees = async (
+  prov: provider,
+  universeAddress: string,
+  userAddress: string
+) => {
   const web3 = new Web3(prov)
-  const universeContract = new web3.eth.Contract((UNIVERSE.abi as unknown) as AbiItem, universeAddress)
-  const fees = await universeContract.methods.calculateFeesPercentage('0', userAddress).call()
+  const universeContract = new web3.eth.Contract(
+    (UNIVERSE.abi as unknown) as AbiItem,
+    universeAddress
+  )
+  const fees = await universeContract.methods
+    .calculateFeesPercentage('0', userAddress)
+    .call()
   debug({ fees })
   return fees
 }
