@@ -4,7 +4,9 @@ import { Addresses, getAccountInfo, monitorChanges } from './kometManager'
 import * as KometManager from './kometManager'
 import * as ports from './ports'
 
-const connect = (app: any, prov: provider, addresses: Addresses) => async (withRequest: boolean) => {
+const connect = (app: any, prov: provider, addresses: Addresses) => async (
+  withRequest: boolean
+) => {
   try {
     const info = await getAccountInfo(prov, addresses, withRequest)
 
@@ -18,18 +20,34 @@ const connect = (app: any, prov: provider, addresses: Addresses) => async (withR
   }
 }
 
-const requestUserStakingInfo = (app: any, prov: provider, addresses: Addresses) => async (userAddress: string) => {
+const requestUserStakingInfo = (
+  app: any,
+  prov: provider,
+  addresses: Addresses
+) => async (userAddress: string) => {
   try {
-    const info = await KometManager.requestUserStakingInfo(prov, addresses.universe, userAddress)
+    const info = await KometManager.requestUserStakingInfo(
+      prov,
+      addresses.universe,
+      userAddress
+    )
     ports.updateUserStakingInfo(app)({ ok: info })
   } catch (err) {
     ports.updateUserStakingInfo(app)({ err: 'COULD_NOT_FETCHED' })
   }
 }
 
-const requestReward = (app: any, prov: provider, addresses: Addresses) => async (userAddress: string) => {
+const requestReward = (
+  app: any,
+  prov: provider,
+  addresses: Addresses
+) => async (userAddress: string) => {
   try {
-    const info = await KometManager.requestReward(prov, addresses.universe, userAddress)
+    const info = await KometManager.requestReward(
+      prov,
+      addresses.universe,
+      userAddress
+    )
     if (info) {
       ports.updateReward(app)({ ok: info })
     } else {
@@ -40,23 +58,33 @@ const requestReward = (app: any, prov: provider, addresses: Addresses) => async 
   }
 }
 
-const requestGeneralStakingInfo = (app: any, prov: provider, addresses: Addresses) => async () => {
+const requestGeneralStakingInfo = (
+  app: any,
+  prov: provider,
+  addresses: Addresses
+) => async () => {
   try {
-    const info = await KometManager.requestGeneralStakingInfo(prov, addresses.universe)
+    const info = await KometManager.requestGeneralStakingInfo(
+      prov,
+      addresses.universe
+    )
     ports.updateGeneralStakingInfo(app)({ ok: info })
   } catch (err) {
     ports.updateGeneralStakingInfo(app)({ err: 'COULD_NOT_FETCHED' })
   }
 }
 
-const askContractApproval = (app: any, prov: provider, addresses: Addresses) => async ({
+const askContractApproval = (
+  app: any,
+  prov: provider,
+  addresses: Addresses
+) => async ({
   userAddress,
   amount
 }: {
-    userAddress: string;
-    amount: string;
+  userAddress: string;
+  amount: string;
 }) => {
-  debug({ userAddress, amount })
   try {
     if (!amount) {
       throw new Error('MISSING_AMOUNT')
@@ -78,8 +106,8 @@ const deposit = (app: any, prov: provider, addresses: Addresses) => async ({
   userAddress,
   amount
 }: {
-    userAddress: string;
-    amount: string;
+  userAddress: string;
+  amount: string;
 }) => {
   try {
     if (!amount) {
@@ -101,8 +129,8 @@ const withdraw = (app: any, prov: provider, addresses: Addresses) => async ({
   userAddress,
   amount
 }: {
-    userAddress: string;
-    amount: string;
+  userAddress: string;
+  amount: string;
 }) => {
   try {
     if (!amount) {
@@ -120,19 +148,32 @@ const withdraw = (app: any, prov: provider, addresses: Addresses) => async ({
   }
 }
 
-const getBuffRate = (app: any, prov: provider, addresses: Addresses) => async (userAddress: string) => {
+const getBuffRate = (app: any, prov: provider, addresses: Addresses) => async (
+  userAddress: string
+) => {
   try {
-    const result = await KometManager.getBuffRate(prov, addresses.universe, userAddress)
+    const result = await KometManager.getBuffRate(
+      prov,
+      addresses.universe,
+      userAddress
+    )
     ports.updateBuffRate(app)({ ok: result })
   } catch (err) {
-    debug('getBuffRate errorred out ... ', err)
     ports.updateBuffRate(app)({ err: 'COULD_NOT_FETCHED' })
   }
 }
 
-const calculateFees = (app: any, prov: provider, addresses: Addresses) => async (userAddress: string) => {
+const calculateFees = (
+  app: any,
+  prov: provider,
+  addresses: Addresses
+) => async (userAddress: string) => {
   try {
-    const result = await KometManager.calculateFees(prov, addresses.universe, userAddress)
+    const result = await KometManager.calculateFees(
+      prov,
+      addresses.universe,
+      userAddress
+    )
     ports.updateFees(app)({ ok: result })
   } catch (err) {
     debug('calculateFees error ... ', err)
@@ -142,9 +183,13 @@ const calculateFees = (app: any, prov: provider, addresses: Addresses) => async 
 
 export const hook = (addresses: Addresses, prov: provider, app: any) => {
   ports.connectMetamask(app)(connect(app, prov, addresses))
-  ports.requestUserStakingInfo(app)(requestUserStakingInfo(app, prov, addresses))
+  ports.requestUserStakingInfo(app)(
+    requestUserStakingInfo(app, prov, addresses)
+  )
   ports.poolReward(app)(requestReward(app, prov, addresses))
-  ports.requestGeneralStakingInfo(app)(requestGeneralStakingInfo(app, prov, addresses))
+  ports.requestGeneralStakingInfo(app)(
+    requestGeneralStakingInfo(app, prov, addresses)
+  )
   ports.askContractApproval(app)(askContractApproval(app, prov, addresses))
   ports.sendDeposit(app)(deposit(app, prov, addresses))
   ports.getBuffRate(app)(getBuffRate(app, prov, addresses))
