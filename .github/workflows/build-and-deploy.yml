@@ -35,7 +35,7 @@ jobs:
         node-version: 15.x
 
     - name: to cache or not to cache...
-      run: echo ${{ steps.yarn-cache.output.cache-hit }}
+      run: echo "|${{ steps.yarn-cache.output.cache-hit }}|"
 
     - name: install dependencies
       if: steps.yarn-cache.output.cache-hit != 'true'
@@ -89,5 +89,5 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         allow_empty_commit: true
         publish_dir: ./dist
-        # cname: komet.finance
+        cname: test.komet.finance
 
