@@ -80,7 +80,6 @@ export const getAccountInfo = async (
       setTimeout(() => reject(new Error('CONTRACT_NOT_FOUND')), MAX_TIMEOUT)
     })
   ])
-  debug('yeah or neee', response)
   return response as AccountInfo
 }
 
