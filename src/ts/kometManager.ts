@@ -3,6 +3,7 @@ import { provider } from 'web3-core'
 import { AbiItem } from 'web3-utils'
 import ERC20ABI from '../../abis/ERC20.json'
 import UNIVERSE from '../../abis/MasterUniverse.json'
+import debug from './debug'
 // eslint-disable-next-line no-unused-vars
 
 const MAX_TIMEOUT = 30 * 1000 // 30 seconds
@@ -79,6 +80,7 @@ export const getAccountInfo = async (
       setTimeout(() => reject(new Error('CONTRACT_NOT_FOUND')), MAX_TIMEOUT)
     })
   ])
+  debug('yeah or neee', response)
   return response as AccountInfo
 }
 

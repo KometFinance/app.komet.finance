@@ -24,6 +24,7 @@ type alias Wallet =
 
 type WalletError
     = SoftConnectFailed
+    | MissingContracts
       -- TODO add more error handling here
     | WrongJson Json.Decode.Error
 
@@ -57,6 +58,7 @@ decoder =
         , Json.Decode.field "error"
             (Json.Decode.oneOf
                 [ decodeExactString "SOFT_CONNECT_FAILED" <| Err SoftConnectFailed
+                , decodeExactString "CONTRACT_NOT_FOUND" <| Err MissingContracts
                 ]
             )
         ]
