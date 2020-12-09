@@ -10,9 +10,9 @@ import BigInt
 import Json.Decode
 import Json.Encode
 import Maybe.Extra
-import Model exposing (AmountInputForm, Fees, Images, Modal(..), Model, StakingFormStage(..), WithdrawInfo)
+import Model exposing (AmountInputForm, Images, Modal(..), Model, StakingFormStage(..), WithdrawInfo)
 import Model.Balance
-import Model.StakingInfo exposing (BuffRate, GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
+import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, WalletError)
 import RemoteData exposing (RemoteData(..))
 import Result.Extra
@@ -26,8 +26,6 @@ type Msg
     | UpdateUserStakingInfo (Result StakingInfoError UserStakingInfo)
     | UpdateGeneralStakingInfo (Result StakingInfoError GeneralStakingInfo)
     | UpdateReward (Result StakingInfoError RewardInfo)
-    | UpdateFees (Result () Fees)
-    | UpdateBuffRate (Result StakingInfoError BuffRate)
     | ShowStakingForm Bool
     | ShowWithdrawConfirmation Bool
     | UpdateStakingForm AmountInputForm
@@ -82,18 +80,6 @@ port updateReward : (Json.Decode.Value -> msg) -> Sub msg
 port poolReward : String -> Cmd msg
 
 
-port getBuffRate : String -> Cmd msg
-
-
-port updateBuffRate : (Json.Decode.Value -> msg) -> Sub msg
-
-
-port calculateFees : String -> Cmd msg
-
-
-port updateFees : (Json.Decode.Value -> msg) -> Sub msg
-
-
 type alias Flags =
     Images
 
@@ -106,7 +92,6 @@ init images =
       , userStakingInfo = NotAsked
       , generalStakingInfo = Loading
       , rewardInfo = NotAsked
-      , buffRate = NotAsked
       }
     , Cmd.batch
         [ connectMetamask False
@@ -145,11 +130,6 @@ update msg model =
                 newWallet
             )
 
-        UpdateBuffRate buffRate ->
-            ( { model | buffRate = RemoteData.fromResult buffRate }
-            , Cmd.none
-            )
-
         UpdateUserStakingInfo stakingInfo ->
             let
                 isCurrentlyStaking =
@@ -167,20 +147,14 @@ update msg model =
 
                     else
                         Failure Model.StakingInfo.SNAFU
-                , buffRate =
-                    if isCurrentlyStaking then
-                        Loading
-
-                    else
-                        model.buffRate
               }
             , model.wallet
                 |> RemoteData.unwrap Cmd.none
                     (\wallet ->
                         if isCurrentlyStaking then
                             Cmd.batch
-                                [ getBuffRate wallet.address
-                                , poolReward wallet.address
+                                [ -- TODO add the fee there
+                                  poolReward wallet.address
                                 ]
 
                         else
@@ -269,8 +243,8 @@ update msg model =
         ShowWithdrawConfirmation True ->
             model.wallet
                 |> RemoteData.unwrap ( model, Cmd.none )
-                    (\wallet ->
-                        ( { model | modal = Just <| WithdrawDetail Model.defaultWithdrawInfo }, calculateFees wallet.address )
+                    (\_ ->
+                        ( { model | modal = Just <| WithdrawDetail Model.defaultWithdrawInfo }, Cmd.none )
                     )
 
         Withdraw ->
@@ -320,12 +294,6 @@ update msg model =
 
         UpdateReward newReward ->
             ( { model | rewardInfo = RemoteData.fromResult newReward }, Cmd.none )
-
-        UpdateFees fees ->
-            updateWithWalletAndWithdrawModal model
-                (\_ info _ ->
-                    ( { model | modal = Just <| WithdrawDetail { info | fees = RemoteData.fromResult fees } }, Cmd.none )
-                )
 
 
 updateWithWalletAndStakingModal : Model -> (Wallet -> AmountInputForm -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
@@ -395,11 +363,6 @@ subscriptions { wallet, modal } =
                                 >> Result.mapError Model.StakingInfo.WrongJson
                                 >> UpdateReward
                             )
-                        , updateBuffRate
-                            (Json.Decode.decodeValue Model.StakingInfo.decoderBuffRate
-                                >> Result.mapError Model.StakingInfo.WrongJson
-                                >> UpdateBuffRate
-                            )
                         , Time.every 60000
                             (\_ -> RefreshInfo)
                         ]
@@ -439,22 +402,12 @@ subscriptions { wallet, modal } =
                             wallet
                                 |> RemoteData.unwrap Sub.none
                                     (\_ ->
-                                        Sub.batch
-                                            [ withdrawResponse
-                                                (Json.Decode.decodeValue
-                                                    Model.StakingInfo.decoderWithdraw
-                                                    >> Result.mapError (\_ -> ())
-                                                    >> WithdrawResponse
-                                                )
-                                            , updateFees
-                                                (Json.Decode.decodeValue Model.decoderFees
-                                                    >> Result.mapError
-                                                        (\err ->
-                                                            ()
-                                                        )
-                                                    >> UpdateFees
-                                                )
-                                            ]
+                                        withdrawResponse
+                                            (Json.Decode.decodeValue
+                                                Model.StakingInfo.decoderWithdraw
+                                                >> Result.mapError (\_ -> ())
+                                                >> WithdrawResponse
+                                            )
                                     )
                 )
         ]

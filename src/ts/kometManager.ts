@@ -3,8 +3,7 @@ import { provider } from 'web3-core'
 import { AbiItem } from 'web3-utils'
 import ERC20ABI from '../../abis/ERC20.json'
 import UNIVERSE from '../../abis/MasterUniverse.json'
-import debug from './debug'
-// eslint-disable-next-line no-unused-vars
+// import debug from './debug'
 
 const MAX_TIMEOUT = 30 * 1000 // 30 seconds
 
@@ -80,7 +79,6 @@ export const getAccountInfo = async (
       setTimeout(() => reject(new Error('CONTRACT_NOT_FOUND')), MAX_TIMEOUT)
     })
   ])
-  debug('yeah or neee', response)
   return response as AccountInfo
 }
 
@@ -120,7 +118,7 @@ export const requestUserStakingInfo = async (
   return await universeContract.methods.userInfo('0', userAddress).call()
 }
 
-export type RewardData = { pending: string };
+export type RewardData = { pending: string; fees: string };
 
 let isRunningAlready = false
 export const requestReward = async (
@@ -142,7 +140,10 @@ export const requestReward = async (
       .pendingNova('0', userAddress)
       .call()
     isRunningAlready = false
-    return { pending }
+    const fees = await universeContract.methods
+      .calculateFeesPercentage('0', userAddress)
+      .call()
+    return { pending, fees }
   } catch (err) {
     isRunningAlready = false
     throw err
@@ -232,39 +233,4 @@ export const withdraw = async ({
   return await universeContract.methods
     .withdraw('0', amount)
     .send({ from: userAddress })
-}
-
-export const getBuffRate = async (
-  prov: provider,
-  universeAddress: string,
-  userAddress: string
-) => {
-  const web3 = new Web3(prov)
-  const universeContract = new web3.eth.Contract(
-    (UNIVERSE.abi as unknown) as AbiItem,
-    universeAddress
-  )
-  const max = await universeContract.methods
-    .maxBuffRate('0', userAddress)
-    .call()
-  const current = await universeContract.methods
-    .calculateBuffRate('0', userAddress, Math.floor(Date.now() / 1000))
-    .call()
-  return { max, current }
-}
-
-export const calculateFees = async (
-  prov: provider,
-  universeAddress: string,
-  userAddress: string
-) => {
-  const web3 = new Web3(prov)
-  const universeContract = new web3.eth.Contract(
-    (UNIVERSE.abi as unknown) as AbiItem,
-    universeAddress
-  )
-  const fees = await universeContract.methods
-    .calculateFeesPercentage('0', userAddress)
-    .call()
-  return fees
 }

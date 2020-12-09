@@ -1,4 +1,8 @@
-module Utils.BigInt exposing (fromBaseUnit, toBaseUnit, toInt)
+module Utils.BigInt exposing
+    ( fromBaseUnit
+    , toBaseUnit
+    , toInt
+    )
 
 import BigInt exposing (BigInt)
 import Maybe.Extra

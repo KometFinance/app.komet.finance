@@ -1,6 +1,12 @@
 // eslint-disable-next-line no-unused-vars
 import debug from './debug'
-import { AccountInfo, RewardData, StakingInfo, StakingState, Transaction } from './kometManager'
+import {
+  AccountInfo,
+  RewardData,
+  StakingInfo,
+  StakingState,
+  Transaction
+} from './kometManager'
 
 export type Result<T> = { err: string } | { ok: T };
 
@@ -8,47 +14,55 @@ export type Result<T> = { err: string } | { ok: T };
 export const updateWallet = (app: any) => (payload: Result<AccountInfo>) => {
   app.ports.updateWallet.send(payload)
 }
-export const updateUserStakingInfo = (app: any) => (payload: Result<StakingInfo>) => {
+export const updateUserStakingInfo = (app: any) => (
+  payload: Result<StakingInfo>
+) => {
   app.ports.updateUserStakingInfo.send(payload)
 }
-export const updateGeneralStakingInfo = (app: any) => (payload: Result<StakingState>) => {
+export const updateGeneralStakingInfo = (app: any) => (
+  payload: Result<StakingState>
+) => {
   app.ports.updateGeneralStakingInfo.send(payload)
 }
 export const updateReward = (app: any) => (payload: Result<RewardData>) => {
   app.ports.updateReward.send(payload)
 }
-export const contractApprovalResponse = (app: any) => (payload: Result<Transaction>) => {
+export const contractApprovalResponse = (app: any) => (
+  payload: Result<Transaction>
+) => {
   app.ports.contractApprovalResponse.send(payload)
 }
 export const depositResponse = (app: any) => (payload: Result<Transaction>) => {
   app.ports.depositResponse.send(payload)
 }
-export const withdrawResponse = (app: any) => (payload: Result<Transaction>) => {
+export const withdrawResponse = (app: any) => (
+  payload: Result<Transaction>
+) => {
   app.ports.withdrawResponse.send(payload)
-}
-export const updateBuffRate = (app: any) => (payload: Result<{ max: number; current: number }>) => {
-  debug('buffrate is overrated -> ', payload)
-  app.ports.updateBuffRate.send(payload)
-}
-export const updateFees = (app: any) => (payload: Result<number>) => {
-  debug('fees -> ', payload)
-  app.ports.updateFees.send(payload)
 }
 
 // from Elm -> TS
-export const connectMetamask = (app: any) => (onConnect: (withRequest: boolean) => void) => {
+export const connectMetamask = (app: any) => (
+  onConnect: (withRequest: boolean) => void
+) => {
   app.ports.connectMetamask.subscribe(onConnect)
 }
 
-export const requestUserStakingInfo = (app: any) => (onRequest: (address: string) => void) => {
+export const requestUserStakingInfo = (app: any) => (
+  onRequest: (address: string) => void
+) => {
   app.ports.requestUserStakingInfo.subscribe(onRequest)
 }
 
-export const requestGeneralStakingInfo = (app: any) => (onRequest: () => void) => {
+export const requestGeneralStakingInfo = (app: any) => (
+  onRequest: () => void
+) => {
   app.ports.requestGeneralStakingInfo.subscribe(onRequest)
 }
 
-export const poolReward = (app: any) => (onRequest: (userAddress: string) => void) => {
+export const poolReward = (app: any) => (
+  onRequest: (userAddress: string) => void
+) => {
   app.ports.poolReward.subscribe(onRequest)
 }
 
@@ -58,19 +72,14 @@ export const askContractApproval = (app: any) => (
   app.ports.askContractApproval.subscribe(onRequest)
 }
 
-export const sendDeposit = (app: any) => (onRequest: (request: { userAddress: string; amount: string }) => void) => {
+export const sendDeposit = (app: any) => (
+  onRequest: (request: { userAddress: string; amount: string }) => void
+) => {
   app.ports.sendDeposit.subscribe(onRequest)
 }
 
-export const withdraw = (app: any) => (onRequest: (request: { userAddress: string; amount: string }) => void) => {
+export const withdraw = (app: any) => (
+  onRequest: (request: { userAddress: string; amount: string }) => void
+) => {
   app.ports.withdraw.subscribe(onRequest)
-}
-
-export const getBuffRate = (app: any) => (onRequest: (userAddress: string) => void) => {
-  app.ports.getBuffRate.subscribe(onRequest)
-}
-}
-
-export const calculateFees = (app: any) => (onRequest: (userAddress: string) => void) => {
-  app.ports.calculateFees.subscribe(onRequest)
 }

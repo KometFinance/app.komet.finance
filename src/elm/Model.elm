@@ -1,20 +1,16 @@
 module Model exposing
     ( AmountInputForm
-    , Fees
     , Images
     , Modal(..)
     , Model
     , StakingFormStage(..)
     , WithdrawInfo
-    , decoderFees
     , defaultAmountInputForm
     , defaultWithdrawInfo
     )
 
 import BigInt exposing (BigInt)
-import Json.Decode exposing (Decoder)
-import Json.Decode.Extra
-import Model.StakingInfo exposing (BuffRate, GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo)
+import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo)
 import Model.Wallet exposing (Wallet, WalletError)
 import RemoteData exposing (RemoteData(..))
 
@@ -41,18 +37,13 @@ type Modal
 
 
 type alias WithdrawInfo =
-    { fees : RemoteData () Fees
-    , withdrawRequest : RemoteData () ()
+    { withdrawRequest : RemoteData () ()
     }
 
 
 defaultWithdrawInfo : WithdrawInfo
 defaultWithdrawInfo =
-    { fees = RemoteData.Loading, withdrawRequest = RemoteData.NotAsked }
-
-
-type alias Fees =
-    Int
+    { withdrawRequest = RemoteData.NotAsked }
 
 
 type StakingFormStage
@@ -83,12 +74,5 @@ type alias Model =
     , modal : Maybe Modal
     , userStakingInfo : RemoteData StakingInfoError UserStakingInfo
     , rewardInfo : RemoteData StakingInfoError RewardInfo
-    , buffRate : RemoteData StakingInfoError BuffRate
     , generalStakingInfo : RemoteData StakingInfoError GeneralStakingInfo
     }
-
-
-decoderFees : Decoder Fees
-decoderFees =
-    Json.Decode.field "ok"
-        Json.Decode.Extra.parseInt
