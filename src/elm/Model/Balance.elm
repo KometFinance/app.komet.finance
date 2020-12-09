@@ -47,6 +47,10 @@ weiToFactor factor (Balance fullBalance) =
     BigInt.div fullBalance (BigInt.pow (BigInt.fromInt 10) (BigInt.fromInt (18 - factor)))
 
 
+
+-- TODO maybe a lot of these implementations should go in BigInt and just be defined here as map BigInt.stuff
+
+
 humanReadableBalance : Int -> Balance -> String
 humanReadableBalance precision =
     split precision >> (\( unit, decimals ) -> unit ++ "." ++ decimals)

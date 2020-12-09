@@ -37,13 +37,18 @@ type Modal
 
 
 type alias WithdrawInfo =
-    { withdrawRequest : RemoteData () ()
+    { amountToWithdraw : BigInt
+    , amountInput : String
+    , withdrawRequest : RemoteData () ()
     }
 
 
 defaultWithdrawInfo : WithdrawInfo
 defaultWithdrawInfo =
-    { withdrawRequest = RemoteData.NotAsked }
+    { amountToWithdraw = BigInt.fromInt 0
+    , amountInput = ""
+    , withdrawRequest = RemoteData.NotAsked
+    }
 
 
 type StakingFormStage

@@ -10,99 +10,83 @@ import Html.Events exposing (onBlur, onClick, onInput, onSubmit)
 import Html.Extra
 import Maybe.Extra
 import Model exposing (AmountInputForm, Images, StakingFormStage(..), WithdrawInfo)
-import Model.Balance
+import Model.Balance exposing (Balance)
 import Model.StakingInfo exposing (RewardInfo, UserStakingInfo)
 import Model.Wallet exposing (Wallet)
 import RemoteData exposing (RemoteData(..))
 import Update exposing (Msg(..))
 import Utils.BigInt
+import View.Commons
 
 
-stakingModal : Images -> AmountInputForm -> Wallet -> Html Msg
-stakingModal _ stakingForm wallet =
-    div
-        [ attribute "aria-labelledby" "connect"
-        , attribute "aria-modal" "true"
-        , class "modal fade show"
-        , attribute "data-backdrop" "static"
-        , attribute "data-keyboard" "false"
-        , id "StackingModal"
-        , attribute "role" "dialog"
-        , attribute "style" "display: block;"
-        , attribute "tabindex" "-1"
-        ]
-        [ div [ class "modal-dialog" ]
-            [ div [ class "bg-transparent modal-content" ]
-                [ div [ class "modal-header" ]
-                    [ button
-                        [ onClick <|
-                            if stakingForm.stakingRequest == Loading then
-                                NoOp
+stakingModal : AmountInputForm -> Wallet -> Html Msg
+stakingModal stakingForm wallet =
+    View.Commons.modal
+        { onClose =
+            if stakingForm.stakingRequest == Loading then
+                Nothing
 
-                            else
-                                ShowStakingForm False
-                        , attribute "aria-label" "Close"
-                        , class "close"
-                        , id "StackingModalButton"
-                        , attribute "data-dismiss" "modal"
-                        , type_ "button"
-                        , disabled <| stakingForm.stakingRequest == Loading
-                        ]
-                        [ span [ attribute "aria-hidden" "true" ]
-                            [ text "×" ]
-                        ]
-                    ]
-                , div [ class "p-0 text-center modal-body" ]
-                    [ div [ class "mx-auto card Appboard" ]
-                        [ let
-                            progress =
-                                case ( stakingForm.stage, stakingForm.stakingRequest ) of
-                                    ( PendingStaking, Loading ) ->
-                                        "75"
+            else
+                Just <| ShowStakingForm False
+        , progress =
+            case ( stakingForm.stage, stakingForm.stakingRequest ) of
+                ( PendingStaking, Loading ) ->
+                    75
 
-                                    ( PendingStaking, _ ) ->
-                                        "50"
+                ( PendingStaking, _ ) ->
+                    50
 
-                                    ( PendingApproval, Loading ) ->
-                                        "25"
+                ( PendingApproval, Loading ) ->
+                    25
 
-                                    ( PendingApproval, _ ) ->
-                                        "0"
-                          in
-                          div [ class "progress" ]
-                            [ div [ attribute "aria-valuemax" "100", attribute "aria-valuemin" "0", attribute "aria-valuenow" progress, class "progress-bar bg-primary", attribute "role" "progressbar", attribute "style" <| "width: " ++ progress ++ "%" ]
-                                []
-                            ]
-                        , let
-                            lpAvailable =
-                                Model.Balance.toBigInt wallet.lpBalance
+                ( PendingApproval, _ ) ->
+                    0
+        , content =
+            let
+                availableBigInt =
+                    Model.Balance.toBigInt wallet.lpBalance
 
-                            amount =
-                                Utils.BigInt.fromBaseUnit stakingForm.amountInput
-                                    |> Maybe.map (BigInt.min lpAvailable)
+                amount =
+                    Utils.BigInt.fromBaseUnit stakingForm.amountInput
+                        |> Maybe.map (BigInt.min availableBigInt)
 
-                            canStartStaking =
-                                amount
-                                    |> Maybe.Extra.unwrap False
-                                        (\validAmount -> BigInt.gt validAmount (BigInt.fromInt 0))
-                          in
-                          case stakingForm.stage of
-                            PendingApproval ->
-                                viewStakingInput
-                                    { lpAvailable = lpAvailable
-                                    , amount = amount
-                                    , canStartStaking = canStartStaking
-                                    }
-                                    wallet
-                                    stakingForm
+                isValid =
+                    amount
+                        |> Maybe.Extra.unwrap False
+                            (\validAmount -> BigInt.gt validAmount (BigInt.fromInt 0))
+            in
+            case stakingForm.stage of
+                PendingApproval ->
+                    viewInput
+                        { title = "Staking KOMET/ETH LP tokens"
+                        , amountDescription = "Amount of KOMET/ETH LP tokens you want to stake"
+                        , buttonText = "Approve contract"
+                        , buttonTextPending = "Awaiting approval..."
+                        , onSubmitMsg = AskContractApproval
+                        , updateInput = \str -> UpdateStakingForm <| { stakingForm | amountInput = str }
+                        , validateInput =
+                            UpdateStakingForm
+                                { stakingForm
+                                    | amountToStake = amount |> Maybe.withDefault (BigInt.fromInt 0)
+                                    , amountInput = Maybe.Extra.unwrap "" Utils.BigInt.toBaseUnit amount
+                                }
+                        , setMax =
+                            UpdateStakingForm
+                                { stakingForm
+                                    | amountToStake = availableBigInt
+                                    , amountInput = Utils.BigInt.toBaseUnit availableBigInt
+                                }
+                        }
+                        { available = wallet.lpBalance
+                        , amount = amount
+                        , amountInput = stakingForm.amountInput
+                        , isValid = isValid
+                        , request = stakingForm.stakingRequest
+                        }
 
-                            PendingStaking ->
-                                viewStakingConfirmation amount stakingForm.stakingRequest
-                        ]
-                    ]
-                ]
-            ]
-        ]
+                PendingStaking ->
+                    viewStakingConfirmation amount stakingForm.stakingRequest
+        }
 
 
 viewStakingConfirmation : Maybe BigInt -> RemoteData () () -> Html Msg
@@ -150,20 +134,38 @@ viewStakingConfirmation amount request =
         ]
 
 
-viewStakingInput :
-    { lpAvailable : BigInt
+type alias Input =
+    { available : Balance
     , amount : Maybe BigInt
-    , canStartStaking : Bool
+    , amountInput : String
+    , isValid : Bool
+    , request : RemoteData () ()
     }
-    -> Wallet
-    -> AmountInputForm
-    -> Html Msg
-viewStakingInput { lpAvailable, amount, canStartStaking } wallet stakingForm =
+
+
+type alias InputConfig =
+    { title : String
+    , amountDescription : String
+    , buttonText : String
+    , buttonTextPending : String
+    , onSubmitMsg : Msg
+    , updateInput : String -> Msg
+    , validateInput : Msg
+    , setMax : Msg
+    }
+
+
+viewInput : InputConfig -> Input -> Html Msg
+viewInput { title, amountDescription, buttonText, buttonTextPending, onSubmitMsg, updateInput, validateInput, setMax } { available, amount, amountInput, isValid, request } =
+    let
+        isLoading =
+            RemoteData.isLoading request
+    in
     div [ class "p-5 card-body" ]
         [ h3 [ class "text-center card-title" ]
-            [ text "Staking KOMET/ETH LP tokens" ]
+            [ text title ]
         , p [ class "mt-4 mb-0 text-center lead gradient_lp" ]
-            [ text <| Model.Balance.humanReadableBalance 2 wallet.lpBalance ]
+            [ text <| Model.Balance.humanReadableBalance 2 available ]
         , p [ class "text-center text-muted" ]
             [ small []
                 [ text "Amount available" ]
@@ -171,15 +173,15 @@ viewStakingInput { lpAvailable, amount, canStartStaking } wallet stakingForm =
         , form
             [ class "pt-4"
             , onSubmit <|
-                if canStartStaking then
-                    AskContractApproval
+                if isValid then
+                    onSubmitMsg
 
                 else
                     NoOp
             ]
             [ fieldset
                 [ class "form-group"
-                , disabled <| RemoteData.isLoading stakingForm.stakingRequest
+                , disabled isLoading
                 ]
                 [ div
                     [ class "input-group"
@@ -191,50 +193,40 @@ viewStakingInput { lpAvailable, amount, canStartStaking } wallet stakingForm =
                         , placeholder "0.0"
                         , classList
                             [ ( "is-invalid"
-                              , (stakingForm.amountInput /= "")
+                              , (amountInput /= "")
                                     && (amount == Nothing)
                               )
                             ]
-                        , value stakingForm.amountInput
-                        , disabled <| RemoteData.isLoading stakingForm.stakingRequest
-                        , onInput <| \str -> UpdateStakingForm <| { stakingForm | amountInput = str }
-                        , onBlur <|
-                            UpdateStakingForm
-                                { stakingForm
-                                    | amountToStake = amount |> Maybe.withDefault (BigInt.fromInt 0)
-                                    , amountInput = Maybe.Extra.unwrap "" Utils.BigInt.toBaseUnit amount
-                                }
+                        , value amountInput
+                        , disabled isLoading
+                        , onInput updateInput
+                        , onBlur validateInput
                         ]
                         []
                     , div [ class "input-group-append" ]
                         [ button
                             [ class "btn btn-secondary"
                             , type_ "button"
-                            , onClick <|
-                                UpdateStakingForm
-                                    { stakingForm
-                                        | amountToStake = lpAvailable
-                                        , amountInput = Utils.BigInt.toBaseUnit lpAvailable
-                                    }
+                            , onClick setMax
                             ]
                             [ text "Max" ]
                         ]
                     ]
                 , small [ class "py-2 form-text text-muted", id "" ]
-                    [ text "Amount of KOMET/ETH LP tokens you want to stake" ]
+                    [ text amountDescription ]
                 , button
                     [ class "flex flex-row items-center justify-center mt-5 mb-0 btn btn-block btn-primary space-x-4"
-                    , disabled <| RemoteData.isLoading stakingForm.stakingRequest
+                    , disabled isLoading
                     ]
                   <|
-                    if RemoteData.isLoading stakingForm.stakingRequest then
+                    if isLoading then
                         [ span [ class "spinner-border" ] []
-                        , span [] [ text "Awaiting approval..." ]
+                        , span [] [ text buttonTextPending ]
                         ]
 
                     else
-                        [ text "Approve contract" ]
-                , if RemoteData.isLoading stakingForm.stakingRequest then
+                        [ text buttonText ]
+                , if isLoading then
                     wankyLoader
 
                   else
