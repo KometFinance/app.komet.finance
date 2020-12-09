@@ -80,18 +80,14 @@ viewReward remoteUserStakingInfo remoteRewardInfo =
                                     [ text <| "." ++ decimals ]
                                 ]
                             ]
-
-                        -- TODO add the plasma stuff here
                         , node "plasma-reward" [] []
                         ]
             , button
                 [ class "mt-3 btn btn-outline-primary btn-block"
                 , type_ "submit"
-                , disabled True
-
-                -- , remoteUserStakingInfo
-                -- |> RemoteData.unwrap True (not << isStaking)
-                -- |> disabled
+                , remoteUserStakingInfo
+                    |> RemoteData.unwrap True (not << isStaking)
+                    |> disabled
                 , onClick <| ShowWithdrawConfirmation True
                 ]
                 [ text "Withdraw earnings" ]
@@ -136,7 +132,6 @@ generalInfoAndCTA images wallet =
                         [ button
                             [ class "flex flex-row items-center space-x-1 btn btn-primary"
                             , onClick <| ShowStakingForm True
-                            , disabled True
                             ]
                             [ img [ src images.stakingGem ] []
                             , span [] [ text "Start staking" ]

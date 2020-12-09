@@ -25,11 +25,6 @@ view ({ wallet, userStakingInfo, rewardInfo, images, modal } as model) =
         , div [ id "app", class "relative flex flex-col p-0 container-fluid" ]
             [ div [ class "flex flex-col flex-grow" ]
                 [ header model
-                , div [ class "p-2 m-8 mt-24 text-center alert alert-warning", role "alert" ]
-                    [ text "Withdraw and Staking are disabled while we are investigating a gas consumption issue. Check our "
-                    , a [ class "font-bold alert-link", href "https://t.me/kometFinance" ] [ text "announcement channel" ]
-                    , text " on telegram for updates."
-                    ]
                 , div [ id "dashboard", class "flex flex-col items-center flex-grow w-full pt-8" ]
                     [ div [ class "flex flex-col items-center justify-center flex-grow w-full" ]
                         [ let
