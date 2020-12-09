@@ -14,7 +14,7 @@ module Model exposing
 import BigInt exposing (BigInt)
 import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
-import Model.StakingInfo exposing (BuffRate, GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo)
+import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo)
 import Model.Wallet exposing (Wallet, WalletError)
 import RemoteData exposing (RemoteData(..))
 
@@ -83,7 +83,6 @@ type alias Model =
     , modal : Maybe Modal
     , userStakingInfo : RemoteData StakingInfoError UserStakingInfo
     , rewardInfo : RemoteData StakingInfoError RewardInfo
-    , buffRate : RemoteData StakingInfoError BuffRate
     , generalStakingInfo : RemoteData StakingInfoError GeneralStakingInfo
     }
 

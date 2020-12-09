@@ -234,25 +234,6 @@ export const withdraw = async ({
     .send({ from: userAddress })
 }
 
-export const getBuffRate = async (
-  prov: provider,
-  universeAddress: string,
-  userAddress: string
-) => {
-  const web3 = new Web3(prov)
-  const universeContract = new web3.eth.Contract(
-    (UNIVERSE.abi as unknown) as AbiItem,
-    universeAddress
-  )
-  const max = await universeContract.methods
-    .maxBuffRate('0', userAddress)
-    .call()
-  const current = await universeContract.methods
-    .calculateBuffRate('0', userAddress, Math.floor(Date.now() / 1000))
-    .call()
-  return { max, current }
-}
-
 export const calculateFees = async (
   prov: provider,
   universeAddress: string,

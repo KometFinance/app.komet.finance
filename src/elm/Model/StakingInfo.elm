@@ -1,11 +1,9 @@
 module Model.StakingInfo exposing
-    ( BuffRate
-    , GeneralStakingInfo
+    ( GeneralStakingInfo
     , RewardInfo
     , StakingInfoError(..)
     , UserStakingInfo
     , decoderApproval
-    , decoderBuffRate
     , decoderDeposit
     , decoderGeneralInfo
     , decoderReward
@@ -34,12 +32,6 @@ type alias GeneralStakingInfo =
 
 type alias RewardInfo =
     { reward : Balance
-    }
-
-
-type alias BuffRate =
-    { max : Int
-    , current : Int
     }
 
 
@@ -94,13 +86,4 @@ decoderReward =
     Json.Decode.field "ok"
         (Json.Decode.succeed RewardInfo
             |> required "pending" Model.Balance.decoder
-        )
-
-
-decoderBuffRate : Decoder BuffRate
-decoderBuffRate =
-    Json.Decode.field "ok"
-        (Json.Decode.succeed BuffRate
-            |> required "max" Json.Decode.int
-            |> required "current" Json.Decode.int
         )

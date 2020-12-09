@@ -148,21 +148,6 @@ const withdraw = (app: any, prov: provider, addresses: Addresses) => async ({
   }
 }
 
-const getBuffRate = (app: any, prov: provider, addresses: Addresses) => async (
-  userAddress: string
-) => {
-  try {
-    const result = await KometManager.getBuffRate(
-      prov,
-      addresses.universe,
-      userAddress
-    )
-    ports.updateBuffRate(app)({ ok: result })
-  } catch (err) {
-    ports.updateBuffRate(app)({ err: 'COULD_NOT_FETCHED' })
-  }
-}
-
 const calculateFees = (
   app: any,
   prov: provider,
@@ -192,7 +177,6 @@ export const hook = (addresses: Addresses, prov: provider, app: any) => {
   )
   ports.askContractApproval(app)(askContractApproval(app, prov, addresses))
   ports.sendDeposit(app)(deposit(app, prov, addresses))
-  ports.getBuffRate(app)(getBuffRate(app, prov, addresses))
   ports.calculateFees(app)(calculateFees(app, prov, addresses))
   ports.withdraw(app)(withdraw(app, prov, addresses))
 
