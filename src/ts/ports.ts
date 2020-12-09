@@ -40,10 +40,6 @@ export const withdrawResponse = (app: any) => (
 ) => {
   app.ports.withdrawResponse.send(payload)
 }
-export const updateFees = (app: any) => (payload: Result<number>) => {
-  debug('fees -> ', payload)
-  app.ports.updateFees.send(payload)
-}
 
 // from Elm -> TS
 export const connectMetamask = (app: any) => (
@@ -86,10 +82,4 @@ export const withdraw = (app: any) => (
   onRequest: (request: { userAddress: string; amount: string }) => void
 ) => {
   app.ports.withdraw.subscribe(onRequest)
-}
-
-export const calculateFees = (app: any) => (
-  onRequest: (userAddress: string) => void
-) => {
-  app.ports.calculateFees.subscribe(onRequest)
 }

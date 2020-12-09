@@ -68,10 +68,12 @@ viewReward remoteUserStakingInfo remoteRewardInfo =
                             [ text "No Data" ]
                         ]
 
-                    Success { reward } ->
+                    Success { fees, reward } ->
                         let
                             ( unit, decimals ) =
-                                split 2 reward
+                                reward
+                                    |> Model.Balance.minusFees fees
+                                    |> split 2
                         in
                         [ div [ class "Plasma position-absolute" ]
                             [ p [ class "mb-0 text-center amount lead" ]

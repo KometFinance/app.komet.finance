@@ -1,10 +1,12 @@
 module Model.Balance exposing
     ( Balance
+    , Fees
     , decoder
     , encode
     , humanReadableBalance
     , isPositive
     , map
+    , minusFees
     , percentOf
     , split
     , toBigInt
@@ -19,6 +21,10 @@ import Utils.BigInt
 
 type Balance
     = Balance BigInt
+
+
+type alias Fees =
+    Int
 
 
 toBigInt : Balance -> BigInt
@@ -93,6 +99,19 @@ percentOf balance1 balance2 =
                 toFloat amount1 * 100 / toFloat amount2
             )
             maybeAmount1
+
+
+minusFees : Fees -> Balance -> Balance
+minusFees fees (Balance number) =
+    let
+        taxes =
+            number
+                |> BigInt.mul (BigInt.fromInt fees)
+                |> (\num ->
+                        BigInt.div num (BigInt.fromInt 100)
+                   )
+    in
+    Balance <| BigInt.sub number taxes
 
 
 encode : Balance -> Json.Encode.Value

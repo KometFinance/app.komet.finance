@@ -257,7 +257,7 @@ wankyLoader =
 
 
 withdrawModal : Images -> WithdrawInfo -> UserStakingInfo -> RewardInfo -> Html Msg
-withdrawModal _ { fees, withdrawRequest } userStakingInfo rewardInfo =
+withdrawModal _ { withdrawRequest } userStakingInfo rewardInfo =
     let
         isLoading =
             RemoteData.isLoading withdrawRequest
@@ -298,7 +298,7 @@ withdrawModal _ { fees, withdrawRequest } userStakingInfo rewardInfo =
                     [ div [ class "mx-auto card Appboard" ]
                         [ let
                             progress =
-                                case ( fees, withdrawRequest ) of
+                                case ( NotAsked, withdrawRequest ) of
                                     ( NotAsked, _ ) ->
                                         "0"
 
@@ -335,7 +335,7 @@ withdrawModal _ { fees, withdrawRequest } userStakingInfo rewardInfo =
                                 [ p [ class "pb-0 mb-0 text-muted" ]
                                     [ text "NOVA to withdraw: " ]
                                 , p [ class "text-danger" ]
-                                    [ fees
+                                    [ NotAsked
                                         |> RemoteData.unwrap (text "\u{00A0}")
                                             (\justFees ->
                                                 let
