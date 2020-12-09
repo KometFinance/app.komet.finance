@@ -53,6 +53,12 @@ view ({ wallet, userStakingInfo, rewardInfo, images, modal } as model) =
                                     , connectButton
                                     ]
 
+                            Failure MissingContracts ->
+                                div [ class "" ]
+                                    [ text "Oh no! It appears the contract are not deployed at the proper address on your network. You should probably try another network in metamask and retry."
+                                    , connectButton
+                                    ]
+
                             Failure _ ->
                                 -- other types of failure: aka ContractNotDeployed or WrongJson
                                 div [ class "flex items-center justify-center flex-column" ]

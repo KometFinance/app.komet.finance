@@ -3,8 +3,10 @@ import { provider } from 'web3-core'
 import { AbiItem } from 'web3-utils'
 import ERC20ABI from '../../abis/ERC20.json'
 import UNIVERSE from '../../abis/MasterUniverse.json'
-// eslint-disable-next-line no-unused-vars
 import debug from './debug'
+// eslint-disable-next-line no-unused-vars
+
+const MAX_TIMEOUT = 30 * 1000 // 30 seconds
 
 export const getERC20Contract = (prov: provider, address: string) => {
   const web3 = new Web3(prov)
@@ -20,8 +22,8 @@ export const getBalance = async (
   tokenAddress: string,
   userAddress: string
 ): Promise<string> => {
-  const contract = getERC20Contract(prov, tokenAddress)
   try {
+    const contract = getERC20Contract(prov, tokenAddress)
     const balance: string = await contract.methods
       .balanceOf(userAddress)
       .call()
@@ -56,17 +58,30 @@ export const getAccountInfo = async (
   const allAccounts = withRequest
     ? await web3.eth.requestAccounts()
     : await web3.eth.getAccounts()
-
   const userAddress = allAccounts[0]
   if (!userAddress) {
     throw new Error('NO_ACCOUNTS')
   }
-  const lp = await getBalance(prov, addresses.lp, userAddress)
-  const nova = await getBalance(prov, addresses.nova, userAddress)
-  const komet = await getBalance(prov, addresses.komet, userAddress)
-  const eth = await web3.eth.getBalance(userAddress)
-
-  return { account: userAddress, eth, komet, lp, nova }
+  const response = await Promise.race([
+    Promise.all([
+      getBalance(prov, addresses.lp, userAddress),
+      getBalance(prov, addresses.nova, userAddress),
+      getBalance(prov, addresses.komet, userAddress),
+      web3.eth.getBalance(userAddress)
+    ]).then(([lp, nova, komet, eth]) => ({
+      account: userAddress,
+      eth,
+      komet,
+      lp,
+      nova
+    })),
+    // eslint-disable-next-line promise/param-names
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('CONTRACT_NOT_FOUND')), MAX_TIMEOUT)
+    })
+  ])
+  debug('yeah or neee', response)
+  return response as AccountInfo
 }
 
 export const monitorChanges = (
@@ -232,11 +247,9 @@ export const getBuffRate = async (
   const max = await universeContract.methods
     .maxBuffRate('0', userAddress)
     .call()
-  debug('max -> ', max)
   const current = await universeContract.methods
     .calculateBuffRate('0', userAddress, Math.floor(Date.now() / 1000))
     .call()
-  debug('current -> ', current)
   return { max, current }
 }
 
@@ -253,6 +266,5 @@ export const calculateFees = async (
   const fees = await universeContract.methods
     .calculateFeesPercentage('0', userAddress)
     .call()
-  debug({ fees })
   return fees
 }
