@@ -1,4 +1,7 @@
-module View.AmountForm exposing (stakingModal, withdrawModal)
+module View.AmountForm exposing
+    ( stakingModal
+    , withdrawModal
+    )
 
 import BigInt exposing (BigInt)
 import Html exposing (Html, button, div, fieldset, form, h3, h4, input, p, small, span, text)
