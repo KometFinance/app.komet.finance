@@ -3,7 +3,6 @@ module View exposing (view)
 import Browser exposing (Document)
 import Html exposing (Html, a, button, div, footer, img, li, nav, small, span, text, ul)
 import Html.Attributes exposing (alt, attribute, class, href, id, src, style, target, type_, width)
-import Html.Attributes.Extra exposing (role)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
 import Model exposing (Images, Model, StakingFormStage(..))
@@ -77,7 +76,7 @@ view ({ wallet, userStakingInfo, rewardInfo, images, modal } as model) =
                                         RemoteData.unwrap Html.Extra.nothing
                                             (\wallet_ ->
                                                 div []
-                                                    [ stakingModal images stakingForm wallet_
+                                                    [ stakingModal stakingForm wallet_
                                                     , div [ class "modal-backdrop fade show" ] []
                                                     ]
                                             )

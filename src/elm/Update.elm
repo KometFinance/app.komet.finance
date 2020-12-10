@@ -10,13 +10,13 @@ import BigInt
 import Json.Decode
 import Json.Encode
 import Maybe.Extra
-import Model exposing (AmountInputForm, Images, Modal(..), Model, StakingFormStage(..), WithdrawInfo)
-import Model.Balance
+import Model exposing (AmountInputForm, Images, Modal(..), Model, StakingFormStage(..), WithdrawInputForm)
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, WalletError)
 import RemoteData exposing (RemoteData(..))
 import Result.Extra
 import Time
+import Utils.BigInt
 
 
 type Msg
@@ -29,6 +29,7 @@ type Msg
     | ShowStakingForm Bool
     | ShowWithdrawConfirmation Bool
     | UpdateStakingForm AmountInputForm
+    | UpdateWithdrawForm WithdrawInputForm
     | AskContractApproval
     | ApprovalResponse (Result () ())
     | SendDeposit
@@ -152,10 +153,7 @@ update msg model =
                 |> RemoteData.unwrap Cmd.none
                     (\wallet ->
                         if isCurrentlyStaking then
-                            Cmd.batch
-                                [ -- TODO add the fee there
-                                  poolReward wallet.address
-                                ]
+                            poolReward wallet.address
 
                         else
                             Cmd.none
@@ -181,14 +179,24 @@ update msg model =
                     , Cmd.none
                     )
 
+        UpdateWithdrawForm form ->
+            updateWithWalletAndWithdrawModal model <|
+                \_ _ ->
+                    ( { model
+                        | modal =
+                            Just <| WithdrawDetail form
+                      }
+                    , Cmd.none
+                    )
+
         AskContractApproval ->
             updateWithWalletAndStakingModal model <|
                 \wallet form ->
-                    ( { model | modal = Just <| StakingDetail { form | stakingRequest = Loading } }
+                    ( { model | modal = Just <| StakingDetail { form | request = Loading } }
                     , askContractApproval <|
                         Json.Encode.object
                             [ ( "userAddress", Json.Encode.string wallet.address )
-                            , ( "amount", Json.Encode.string <| BigInt.toString form.amountToStake )
+                            , ( "amount", Utils.BigInt.encode form.amount )
                             ]
                     )
 
@@ -200,7 +208,7 @@ update msg model =
                             Just <|
                                 StakingDetail
                                     { form
-                                        | stakingRequest =
+                                        | request =
                                             response
                                                 |> RemoteData.fromResult
                                                 -- if all went well we move to the next stage hence we reset the request
@@ -216,12 +224,12 @@ update msg model =
                 \wallet form ->
                     ( { model
                         | modal =
-                            Just <| StakingDetail { form | stakingRequest = Loading }
+                            Just <| StakingDetail { form | request = Loading }
                       }
                     , sendDeposit <|
                         Json.Encode.object
                             [ ( "userAddress", Json.Encode.string wallet.address )
-                            , ( "amount", Json.Encode.string <| BigInt.toString form.amountToStake )
+                            , ( "amount", Json.Encode.string <| BigInt.toString form.amount )
                             ]
                     )
 
@@ -233,7 +241,7 @@ update msg model =
         DepositResponse (Err ()) ->
             updateWithWalletAndStakingModal model <|
                 \_ form ->
-                    ( { model | modal = Just <| StakingDetail { form | stakingRequest = RemoteData.Failure () } }
+                    ( { model | modal = Just <| StakingDetail { form | request = RemoteData.Failure () } }
                     , connectMetamask False
                     )
 
@@ -249,18 +257,18 @@ update msg model =
 
         Withdraw ->
             updateWithWalletAndWithdrawModal model
-                (\wallet info userStakingInfo ->
+                (\wallet form ->
                     ( { model
                         | modal =
                             Just <|
                                 WithdrawDetail
-                                    { info
-                                        | withdrawRequest = Loading
+                                    { form
+                                        | request = Loading
                                     }
                       }
                     , withdraw <|
                         Json.Encode.object
-                            [ ( "amount", Model.Balance.encode userStakingInfo.amount )
+                            [ ( "amount", Utils.BigInt.encode form.amount )
                             , ( "userAddress", Json.Encode.string wallet.address )
                             ]
                     )
@@ -271,8 +279,8 @@ update msg model =
 
         WithdrawResponse (Err ()) ->
             updateWithWalletAndWithdrawModal model
-                (\_ info _ ->
-                    ( { model | modal = Just <| WithdrawDetail { info | withdrawRequest = RemoteData.Failure () } }, Cmd.none )
+                (\_ info ->
+                    ( { model | modal = Just <| WithdrawDetail { info | request = RemoteData.Failure () } }, Cmd.none )
                 )
 
         RefreshInfo ->
@@ -315,10 +323,10 @@ updateWithWalletAndStakingModal model updater =
             )
 
 
-updateWithWalletAndWithdrawModal : Model -> (Wallet -> WithdrawInfo -> UserStakingInfo -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
+updateWithWalletAndWithdrawModal : Model -> (Wallet -> WithdrawInputForm -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
 updateWithWalletAndWithdrawModal model updater =
     Maybe.map3
-        (\modal wallet userStakingInfo ->
+        (\modal wallet _ ->
             case modal of
                 MoneyDetail ->
                     ( model, Cmd.none )
@@ -327,7 +335,7 @@ updateWithWalletAndWithdrawModal model updater =
                     ( model, Cmd.none )
 
                 WithdrawDetail info ->
-                    updater wallet info userStakingInfo
+                    updater wallet info
         )
         model.modal
         (RemoteData.toMaybe model.wallet)

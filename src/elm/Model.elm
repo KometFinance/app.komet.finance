@@ -4,7 +4,7 @@ module Model exposing
     , Modal(..)
     , Model
     , StakingFormStage(..)
-    , WithdrawInfo
+    , WithdrawInputForm
     , defaultAmountInputForm
     , defaultWithdrawInfo
     )
@@ -33,17 +33,22 @@ type Modal
     = -- for now that will only be for the LP token but who knows.
       MoneyDetail
     | StakingDetail AmountInputForm
-    | WithdrawDetail WithdrawInfo
+    | WithdrawDetail WithdrawInputForm
 
 
-type alias WithdrawInfo =
-    { withdrawRequest : RemoteData () ()
+type alias WithdrawInputForm =
+    { amount : BigInt
+    , amountInput : String
+    , request : RemoteData () ()
     }
 
 
-defaultWithdrawInfo : WithdrawInfo
+defaultWithdrawInfo : WithdrawInputForm
 defaultWithdrawInfo =
-    { withdrawRequest = RemoteData.NotAsked }
+    { amount = BigInt.fromInt 0
+    , amountInput = ""
+    , request = RemoteData.NotAsked
+    }
 
 
 type StakingFormStage
@@ -52,19 +57,19 @@ type StakingFormStage
 
 
 type alias AmountInputForm =
-    { amountToStake : BigInt
+    { amount : BigInt
     , amountInput : String
     , stage : StakingFormStage
-    , stakingRequest : RemoteData () ()
+    , request : RemoteData () ()
     }
 
 
 defaultAmountInputForm : AmountInputForm
 defaultAmountInputForm =
-    { amountToStake = BigInt.fromInt 0
+    { amount = BigInt.fromInt 0
     , amountInput = ""
     , stage = PendingApproval
-    , stakingRequest = NotAsked
+    , request = NotAsked
     }
 
 
