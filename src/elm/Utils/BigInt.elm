@@ -1,10 +1,12 @@
 module Utils.BigInt exposing
-    ( fromBaseUnit
+    ( encode
+    , fromBaseUnit
     , toBaseUnit
     , toInt
     )
 
 import BigInt exposing (BigInt)
+import Json.Encode
 import Maybe.Extra
 import String
 
@@ -71,3 +73,8 @@ toBaseUnit =
                 unit
                     ++ Maybe.Extra.unwrap "" ((++) ".") decimals
            )
+
+
+encode : BigInt -> Json.Encode.Value
+encode =
+    Json.Encode.string << BigInt.toString
