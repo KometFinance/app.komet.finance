@@ -7,6 +7,7 @@ port module Update exposing
     )
 
 import BigInt
+import Browser.Events exposing (Visibility)
 import Json.Decode
 import Json.Encode
 import Maybe.Extra
@@ -37,6 +38,7 @@ type Msg
     | Withdraw
     | WithdrawResponse (Result () ())
     | RefreshInfo
+    | VisibityChange Visibility
 
 
 port connectMetamask : Bool -> Cmd msg
@@ -93,6 +95,7 @@ init images =
       , userStakingInfo = NotAsked
       , generalStakingInfo = Loading
       , rewardInfo = NotAsked
+      , visibility = Browser.Events.Visible
       }
     , Cmd.batch
         [ connectMetamask False
@@ -106,6 +109,9 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        VisibityChange visibility ->
+            ( { model | visibility = visibility }, Cmd.none )
 
         Connect ->
             ( { model | wallet = Loading }, connectMetamask True )
@@ -349,9 +355,10 @@ updateWithWalletAndWithdrawModal model updater =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions { wallet, modal } =
+subscriptions { wallet, modal, visibility } =
     Sub.batch
-        [ updateWallet
+        [ Browser.Events.onVisibilityChange VisibityChange
+        , updateWallet
             (Json.Decode.decodeValue Model.Wallet.decoder
                 >> Result.mapError Model.Wallet.WrongJson
                 >> Result.andThen identity
@@ -376,8 +383,12 @@ subscriptions { wallet, modal } =
                                 >> Result.mapError Model.StakingInfo.WrongJson
                                 >> UpdateReward
                             )
-                        , Time.every 60000
-                            (\_ -> RefreshInfo)
+                        , if visibility == Browser.Events.Visible then
+                            Time.every 30000
+                                (\_ -> RefreshInfo)
+
+                          else
+                            Sub.none
                         ]
                 )
         , updateGeneralStakingInfo
