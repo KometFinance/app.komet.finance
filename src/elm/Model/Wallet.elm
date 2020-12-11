@@ -55,7 +55,7 @@ decoder =
             )
 
         -- err decoder
-        , Json.Decode.field "error"
+        , Json.Decode.field "err"
             (Json.Decode.oneOf
                 [ decodeExactString "SOFT_CONNECT_FAILED" <| Err SoftConnectFailed
                 , decodeExactString "CONTRACT_NOT_FOUND" <| Err MissingContracts

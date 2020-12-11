@@ -42,13 +42,13 @@ view ({ wallet, userStakingInfo, rewardInfo, images, modal } as model) =
                                 defaultLoader
 
                             Failure SoftConnectFailed ->
-                                div [ class "" ]
+                                div [ class "flex flex-col space-y-2" ]
                                     [ text "Oh no! It looks like you have not connected your wallet."
                                     , connectButton
                                     ]
 
                             Failure MissingContracts ->
-                                div [ class "" ]
+                                div [ class "flex flex-col space-y-2" ]
                                     [ text "Oh no! It appears the contract are not deployed at the proper address on your network. You should probably try another network in metamask and retry."
                                     , connectButton
                                     ]
@@ -76,7 +76,11 @@ view ({ wallet, userStakingInfo, rewardInfo, images, modal } as model) =
                                         RemoteData.unwrap Html.Extra.nothing
                                             (\wallet_ ->
                                                 div []
-                                                    [ stakingModal stakingForm wallet_
+                                                    [ stakingModal stakingForm wallet_ <|
+                                                        RemoteData.toMaybe <|
+                                                            RemoteData.map2 Tuple.pair
+                                                                model.userStakingInfo
+                                                                model.rewardInfo
                                                     , div [ class "modal-backdrop fade show" ] []
                                                     ]
                                             )

@@ -127,7 +127,12 @@ update msg model =
                         model.userStakingInfo
               }
             , Result.Extra.unwrap Cmd.none
-                (\{ address } -> requestUserStakingInfo address)
+                (\{ address } ->
+                    Cmd.batch
+                        [ requestUserStakingInfo address
+                        , poolReward address
+                        ]
+                )
                 newWallet
             )
 
