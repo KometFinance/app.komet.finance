@@ -10,6 +10,7 @@ module Model exposing
     )
 
 import BigInt exposing (BigInt)
+import Browser.Events
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo)
 import Model.Wallet exposing (Wallet, WalletError)
 import RemoteData exposing (RemoteData(..))
@@ -80,4 +81,5 @@ type alias Model =
     , userStakingInfo : RemoteData StakingInfoError UserStakingInfo
     , rewardInfo : RemoteData StakingInfoError RewardInfo
     , generalStakingInfo : RemoteData StakingInfoError GeneralStakingInfo
+    , visibility : Browser.Events.Visibility
     }
