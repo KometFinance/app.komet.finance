@@ -321,7 +321,7 @@ wankyLoader =
 costBreakdown : UserStakingInfo -> RewardInfo -> BigInt -> Move -> Html Msg
 costBreakdown userStakingInfo { reward, fees } amount move =
     div [ class "flex flex-col mt-8 mb-12" ]
-        [ h1 [ class "text-xl" ] [ text "Operation preview" ]
+        [ h1 [ class "pl-4 text-xl text-left" ] [ text "Operation preview" ]
         , div [ class "p-4 text-left card text-muted space-y-2" ]
             [ h4 [ class "pt-2 pb-0 mb-0 text-lg text-muted" ]
                 [ text "Your stake in the pool:" ]
@@ -356,7 +356,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                                     ++ Utils.BigInt.toBaseUnit amount
                                     ++ ")"
                             ]
-                , span [] [ text "KOMET/ETH LP" ]
+                , span [ class "text-secondary" ] [ text "KOMET/ETH LP" ]
                 ]
             , h4 [ class "pt-2 pb-0 mb-0 text-lg text-muted" ]
                 [ text "Your reward distribution" ]
@@ -366,8 +366,8 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                         Model.Balance.humanReadableBalance 4 <|
                             Model.Balance.minusFees fees reward
                     ]
-                , span [] [ text "NOVA" ]
-                , div []
+                , span [ class "text-secondary" ] [ text "NOVA" ]
+                , div [ class "text-secondary" ]
                     [ text "(including "
                     , span [ class "text-secondary" ] [ text <| String.fromInt fees ]
                     , span [] [ text "% fees)" ]
