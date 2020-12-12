@@ -1,8 +1,7 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils'
 import ERC20ABI from '../../abis/ERC20.json'
-import UNIVERSE from '../../abis/MasterUniverse.json'
-// import debug from './debug'
+import UNIVERSE from '../../abis/MasterUniverse2.json'
 
 const MAX_TIMEOUT = 30 * 1000 // 30 seconds
 

@@ -1,6 +1,6 @@
 module View.Dashboard exposing (dashboard)
 
-import Html exposing (Html, a, br, button, div, h3, h4, h6, hr, img, li, node, p, small, span, text, ul)
+import Html exposing (Html, a, button, div, h3, h4, h6, hr, img, li, node, p, small, span, text, ul)
 import Html.Attributes exposing (attribute, class, disabled, href, id, src, target, type_)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
@@ -11,10 +11,9 @@ import Model.Wallet exposing (Wallet, canStake)
 import RemoteData exposing (RemoteData(..))
 import Round
 import Svg exposing (defs, g, linearGradient, rect, stop, svg)
-import Svg.Attributes exposing (fill, fillRule, height, offset, stopColor, stroke, strokeWidth, transform, viewBox, width, x, x1, x2, y, y1, y2)
+import Svg.Attributes exposing (fill, fillRule, height, offset, stopColor, stroke, strokeWidth, transform, width, x, x1, x2, y, y1, y2)
 import Update exposing (Msg(..))
 import View.Commons exposing (defaultError, defaultLoader)
-import View.Gauge
 
 
 dashboard : Model -> Html Msg
@@ -160,7 +159,7 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo remoteRewardInfo =
                 [ small []
                     [ text "Statistics about staking" ]
                 ]
-            , case RemoteData.map3 (\stakingInfo userStakingInfo rewardInfo -> ( stakingInfo, userStakingInfo, rewardInfo )) remoteGeneralStakingInfo remoteStakingInfo remoteRewardInfo of
+            , case RemoteData.map2 Tuple.pair remoteGeneralStakingInfo remoteStakingInfo of
                 Loading ->
                     defaultLoader
 
@@ -170,7 +169,7 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo remoteRewardInfo =
                 Failure _ ->
                     defaultError
 
-                Success ( { totalLpStaked }, { amount }, { fees } ) ->
+                Success ( { totalLpStaked }, { amount } ) ->
                     div [ class "pt-3 d-flex align-self-center flex-column" ]
                         [ ul [ class "mt-4 list-unstyled" ]
                             [ li []
@@ -208,13 +207,17 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo remoteRewardInfo =
                                     [ text <| "." ++ decimals ++ " KOMET/ETH LP" ]
                                 ]
                             ]
-                        , div [ class "my-3" ]
-                            [ h6 []
-                                [ text <| String.fromInt fees ++ "% withdraw fees" ]
-                            , feeSlider fees
-                            , small [ class "text-muted" ]
-                                [ text "Current withdraw fees on your NOVA reward" ]
-                            ]
+                        , RemoteData.toMaybe remoteRewardInfo
+                            |> Html.Extra.viewMaybe
+                                (\{ fees } ->
+                                    div [ class "my-3" ]
+                                        [ h6 []
+                                            [ text <| String.fromInt fees ++ "% withdraw fees" ]
+                                        , feeSlider fees
+                                        , small [ class "text-muted" ]
+                                            [ text "Current withdraw fees on your NOVA reward" ]
+                                        ]
+                                )
                         ]
             ]
         ]
