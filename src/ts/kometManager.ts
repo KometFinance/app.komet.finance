@@ -1,5 +1,4 @@
 import Web3 from 'web3'
-import { provider } from 'web3-core'
 import { AbiItem } from 'web3-utils'
 import ERC20ABI from '../../abis/ERC20.json'
 import UNIVERSE from '../../abis/MasterUniverse.json'
@@ -7,8 +6,7 @@ import UNIVERSE from '../../abis/MasterUniverse.json'
 
 const MAX_TIMEOUT = 30 * 1000 // 30 seconds
 
-export const getERC20Contract = (prov: provider, address: string) => {
-  const web3 = new Web3(prov)
+export const getERC20Contract = (web3: Web3, address: string) => {
   const contract = new web3.eth.Contract(
     (ERC20ABI.abi as unknown) as AbiItem,
     address
@@ -17,12 +15,12 @@ export const getERC20Contract = (prov: provider, address: string) => {
 }
 
 export const getBalance = async (
-  prov: provider,
+  web3: Web3,
   tokenAddress: string,
   userAddress: string
 ): Promise<string> => {
   try {
-    const contract = getERC20Contract(prov, tokenAddress)
+    const contract = getERC20Contract(web3, tokenAddress)
     const balance: string = await contract.methods
       .balanceOf(userAddress)
       .call()
@@ -48,12 +46,10 @@ export type AccountInfo = {
 };
 
 export const getAccountInfo = async (
-  prov: provider,
+  web3: Web3,
   addresses: Addresses,
   withRequest: boolean
 ): Promise<AccountInfo> => {
-  const web3 = new Web3(prov)
-
   const allAccounts = withRequest
     ? await web3.eth.requestAccounts()
     : await web3.eth.getAccounts()
@@ -63,9 +59,9 @@ export const getAccountInfo = async (
   }
   const response = await Promise.race([
     Promise.all([
-      getBalance(prov, addresses.lp, userAddress),
-      getBalance(prov, addresses.nova, userAddress),
-      getBalance(prov, addresses.komet, userAddress),
+      getBalance(web3, addresses.lp, userAddress),
+      getBalance(web3, addresses.nova, userAddress),
+      getBalance(web3, addresses.komet, userAddress),
       web3.eth.getBalance(userAddress)
     ]).then(([lp, nova, komet, eth]) => ({
       account: userAddress,
@@ -83,10 +79,9 @@ export const getAccountInfo = async (
 }
 
 export const monitorChanges = (
-  prov: provider,
+  web3: Web3,
   onAccountsChanged: (withRequest: boolean) => void
 ) => {
-  const web3 = new Web3(prov)
   web3.currentProvider.on('chainChanged', (_) => {
     location.reload()
   })
@@ -106,11 +101,10 @@ export type StakingInfo = {
 };
 
 export const requestUserStakingInfo = async (
-  prov: provider,
+  web3: Web3,
   universeAddress: string,
   userAddress: string
 ): Promise<StakingInfo> => {
-  const web3 = new Web3(prov)
   const universeContract = new web3.eth.Contract(
     (UNIVERSE.abi as unknown) as AbiItem,
     universeAddress
@@ -122,7 +116,7 @@ export type RewardData = { pending: string; fees: string };
 
 let isRunningAlready = false
 export const requestReward = async (
-  prov: provider,
+  web3: Web3,
   universeAddress: string,
   userAddress: string
 ): Promise<RewardData> => {
@@ -130,7 +124,6 @@ export const requestReward = async (
     return
   }
   isRunningAlready = true
-  const web3 = new Web3(prov)
   const universeContract = new web3.eth.Contract(
     (UNIVERSE.abi as unknown) as AbiItem,
     universeAddress
@@ -153,10 +146,9 @@ export const requestReward = async (
 export type StakingState = { totalLpStaked: string };
 
 export const requestGeneralStakingInfo = async (
-  prov: provider,
+  web3: Web3,
   universeAddress: string
 ): Promise<StakingState> => {
-  const web3 = new Web3(prov)
   const universeContract = new web3.eth.Contract(
     (UNIVERSE.abi as unknown) as AbiItem,
     universeAddress
@@ -165,7 +157,7 @@ export const requestGeneralStakingInfo = async (
 }
 
 export type ContractApprovalArg = {
-  prov: provider;
+  web3: Web3;
   universeAddress: string;
   lpAddress: string;
   userAddress: string;
@@ -177,32 +169,31 @@ export type Transaction = {
 };
 
 export const askContractApproval = async ({
-  prov,
+  web3,
   lpAddress,
   universeAddress,
   userAddress,
   amount
 }: ContractApprovalArg): Promise<Transaction> => {
-  const lpContract = getERC20Contract(prov, lpAddress)
+  const lpContract = getERC20Contract(web3, lpAddress)
   return await lpContract.methods
     .approve(universeAddress, amount)
     .send({ from: userAddress })
 }
 
 export type DepositArg = {
-  prov: provider;
+  web3: Web3;
   universeAddress: string;
   userAddress: string;
   amount: string;
 };
 
 export const deposit = async ({
-  prov,
+  web3,
   universeAddress,
   userAddress,
   amount
 }: DepositArg): Promise<Transaction> => {
-  const web3 = new Web3(prov)
   const universeContract = new web3.eth.Contract(
     (UNIVERSE.abi as unknown) as AbiItem,
     universeAddress
@@ -213,19 +204,18 @@ export const deposit = async ({
 }
 
 export type WithdrawArg = {
-  prov: provider;
+  web3: Web3;
   universeAddress: string;
   userAddress: string;
   amount: string;
 };
 
 export const withdraw = async ({
-  prov,
+  web3,
   universeAddress,
   userAddress,
   amount
 }: WithdrawArg): Promise<Transaction> => {
-  const web3 = new Web3(prov)
   const universeContract = new web3.eth.Contract(
     (UNIVERSE.abi as unknown) as AbiItem,
     universeAddress

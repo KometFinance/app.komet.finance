@@ -1,14 +1,14 @@
-import { provider } from 'web3-core'
+import Web3 from 'web3'
 import debug from './debug'
 import { Addresses, getAccountInfo, monitorChanges } from './kometManager'
 import * as KometManager from './kometManager'
 import * as ports from './ports'
 
-const connect = (app: any, prov: provider, addresses: Addresses) => async (
+const connect = (app: any, web3: Web3, addresses: Addresses) => async (
   withRequest: boolean
 ) => {
   try {
-    const info = await getAccountInfo(prov, addresses, withRequest)
+    const info = await getAccountInfo(web3, addresses, withRequest)
 
     ports.updateWallet(app)({ ok: info })
   } catch (err) {
@@ -22,12 +22,12 @@ const connect = (app: any, prov: provider, addresses: Addresses) => async (
 
 const requestUserStakingInfo = (
   app: any,
-  prov: provider,
+  web3: Web3,
   addresses: Addresses
 ) => async (userAddress: string) => {
   try {
     const info = await KometManager.requestUserStakingInfo(
-      prov,
+      web3,
       addresses.universe,
       userAddress
     )
@@ -37,14 +37,12 @@ const requestUserStakingInfo = (
   }
 }
 
-const requestReward = (
-  app: any,
-  prov: provider,
-  addresses: Addresses
-) => async (userAddress: string) => {
+const requestReward = (app: any, web3: Web3, addresses: Addresses) => async (
+  userAddress: string
+) => {
   try {
     const info = await KometManager.requestReward(
-      prov,
+      web3,
       addresses.universe,
       userAddress
     )
@@ -60,12 +58,12 @@ const requestReward = (
 
 const requestGeneralStakingInfo = (
   app: any,
-  prov: provider,
+  web3: Web3,
   addresses: Addresses
 ) => async () => {
   try {
     const info = await KometManager.requestGeneralStakingInfo(
-      prov,
+      web3,
       addresses.universe
     )
     ports.updateGeneralStakingInfo(app)({ ok: info })
@@ -76,7 +74,7 @@ const requestGeneralStakingInfo = (
 
 const askContractApproval = (
   app: any,
-  prov: provider,
+  web3: Web3,
   addresses: Addresses
 ) => async ({
   userAddress,
@@ -90,7 +88,7 @@ const askContractApproval = (
       throw new Error('MISSING_AMOUNT')
     }
     const result = await KometManager.askContractApproval({
-      prov,
+      web3,
       lpAddress: addresses.lp,
       universeAddress: addresses.universe,
       amount,
@@ -102,7 +100,7 @@ const askContractApproval = (
   }
 }
 
-const deposit = (app: any, prov: provider, addresses: Addresses) => async ({
+const deposit = (app: any, web3: Web3, addresses: Addresses) => async ({
   userAddress,
   amount
 }: {
@@ -114,7 +112,7 @@ const deposit = (app: any, prov: provider, addresses: Addresses) => async ({
       throw new Error('MISSING_AMOUNT')
     }
     const result = await KometManager.deposit({
-      prov,
+      web3,
       universeAddress: addresses.universe,
       amount,
       userAddress
@@ -125,7 +123,7 @@ const deposit = (app: any, prov: provider, addresses: Addresses) => async ({
   }
 }
 
-const withdraw = (app: any, prov: provider, addresses: Addresses) => async ({
+const withdraw = (app: any, web3: Web3, addresses: Addresses) => async ({
   userAddress,
   amount
 }: {
@@ -137,7 +135,7 @@ const withdraw = (app: any, prov: provider, addresses: Addresses) => async ({
       throw new Error('MISSING_AMOUNT')
     }
     const result = await KometManager.withdraw({
-      prov,
+      web3,
       universeAddress: addresses.universe,
       amount,
       userAddress
@@ -148,20 +146,20 @@ const withdraw = (app: any, prov: provider, addresses: Addresses) => async ({
   }
 }
 
-export const hook = (addresses: Addresses, prov: provider, app: any) => {
-  ports.connectMetamask(app)(connect(app, prov, addresses))
+export const hook = (addresses: Addresses, web3: Web3, app: any) => {
+  ports.connectMetamask(app)(connect(app, web3, addresses))
   ports.requestUserStakingInfo(app)(
-    requestUserStakingInfo(app, prov, addresses)
+    requestUserStakingInfo(app, web3, addresses)
   )
-  ports.poolReward(app)(requestReward(app, prov, addresses))
+  ports.poolReward(app)(requestReward(app, web3, addresses))
   ports.requestGeneralStakingInfo(app)(
-    requestGeneralStakingInfo(app, prov, addresses)
+    requestGeneralStakingInfo(app, web3, addresses)
   )
-  ports.askContractApproval(app)(askContractApproval(app, prov, addresses))
-  ports.sendDeposit(app)(deposit(app, prov, addresses))
-  ports.withdraw(app)(withdraw(app, prov, addresses))
+  ports.askContractApproval(app)(askContractApproval(app, web3, addresses))
+  ports.sendDeposit(app)(deposit(app, web3, addresses))
+  ports.withdraw(app)(withdraw(app, web3, addresses))
 
   // NOTE that should go in a better place but ...
   // let's listen to changes
-  monitorChanges(prov, connect(app, prov, addresses))
+  monitorChanges(web3, connect(app, web3, addresses))
 }
