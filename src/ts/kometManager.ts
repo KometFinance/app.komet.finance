@@ -146,13 +146,11 @@ export type StakingState = { totalLpStaked: string };
 
 export const requestGeneralStakingInfo = async (
   web3: Web3,
+  lpAddress: string,
   universeAddress: string
 ): Promise<StakingState> => {
-  const universeContract = new web3.eth.Contract(
-    (UNIVERSE.abi as unknown) as AbiItem,
-    universeAddress
-  )
-  return await universeContract.methods.poolInfo('0').call()
+  const totalLpStaked = await getBalance(web3, lpAddress, universeAddress)
+  return { totalLpStaked }
 }
 
 export type ContractApprovalArg = {

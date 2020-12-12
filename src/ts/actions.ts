@@ -63,6 +63,7 @@ const requestGeneralStakingInfo = (
   try {
     const info = await KometManager.requestGeneralStakingInfo(
       web3,
+      addresses.lp,
       addresses.universe
     )
     ports.updateGeneralStakingInfo(app)({ ok: info })
