@@ -14,6 +14,7 @@ export const setup = async () => {
     nova: process.env.NOVA,
     universe: process.env.MU
   })
+  console.log('addresses -> ', addresses)
 
   const app = Elm.Main.init({
     flags: images
