@@ -217,13 +217,14 @@ viewFidelity _ =
                 [ small []
                     [ text "Your staking fidelity" ]
                 ]
-            , div [ class "flex items-center justify-center flex-grow mx-auto flex-column w-75" ]
-                [ View.Gauge.view 1 3
-                ]
-            , p [ class "mt-2 text-sm text-center alert text-muted" ]
-                [ text "⚠ This gauge is not working yet ⚠"
-                , br [] []
-                , text "All the features required to show the information is there, we just need a bit more dev time to make it pretty, thanks for your patience and understanding"
-                ]
+
+            -- , div [ class "flex items-center justify-center flex-grow mx-auto flex-column w-75" ]
+            -- [ View.Gauge.view 1 3
+            -- ]
+            -- , p [ class "mt-2 text-sm text-center alert text-muted" ]
+            -- [ text "⚠ This gauge is not working yet ⚠"
+            -- , br [] []
+            -- , text "All the features required to show the information is there, we just need a bit more dev time to make it pretty, thanks for your patience and understanding"
+            -- ]
             ]
         ]
