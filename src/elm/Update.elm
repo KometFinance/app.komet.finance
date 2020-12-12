@@ -254,7 +254,12 @@ update msg model =
         DepositResponse (Ok ()) ->
             updateWithWalletAndStakingModal model <|
                 \_ _ ->
-                    ( { model | modal = Nothing }, connectMetamask False )
+                    ( { model | modal = Nothing }
+                    , Cmd.batch
+                        [ connectMetamask False
+                        , requestGeneralStakingInfo ()
+                        ]
+                    )
 
         DepositResponse (Err ()) ->
             updateWithWalletAndStakingModal model <|

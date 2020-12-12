@@ -300,8 +300,8 @@ viewFidelity remoteRewardInfo =
                     , text <| "Fees start at "
                     , span [ class "text-secondary" ] [ text "30%" ]
                     , text " and decrease by "
-                    , span [ class "text-primary" ] [ text "0.5%" ]
-                    , text " every day until "
+                    , span [ class "text-primary" ] [ text "1%" ]
+                    , text " every second day until reaching "
                     , span [ class "text-prumary" ]
                         [ text
                             "1%"
