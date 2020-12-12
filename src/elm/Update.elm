@@ -30,6 +30,7 @@ type Msg
     | ShowStakingForm Bool
     | ShowFeeExplanation Bool
     | ShowWithdrawConfirmation Bool
+    | ShowMigrationPanel Bool
     | UpdateStakingForm AmountInputForm
     | UpdateWithdrawForm WithdrawInputForm
     | AskContractApproval
@@ -185,6 +186,12 @@ update msg model =
             ( { model | modal = Just FeeExplanation }, Cmd.none )
 
         ShowFeeExplanation False ->
+            ( { model | modal = Nothing }, Cmd.none )
+
+        ShowMigrationPanel True ->
+            Debug.todo ""
+
+        ShowMigrationPanel False ->
             ( { model | modal = Nothing }, Cmd.none )
 
         UpdateStakingForm form ->
