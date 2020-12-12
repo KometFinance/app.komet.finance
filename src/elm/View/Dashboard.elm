@@ -1,6 +1,6 @@
 module View.Dashboard exposing (dashboard)
 
-import Html exposing (Html, a, br, button, div, h3, h4, hr, img, li, node, p, small, span, text, ul)
+import Html exposing (Html, a, br, button, div, h3, h4, h6, hr, img, li, node, p, small, span, text, ul)
 import Html.Attributes exposing (attribute, class, disabled, href, id, src, target, type_)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
@@ -10,6 +10,8 @@ import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoEr
 import Model.Wallet exposing (Wallet, canStake)
 import RemoteData exposing (RemoteData(..))
 import Round
+import Svg exposing (defs, g, linearGradient, rect, stop, svg)
+import Svg.Attributes exposing (fill, fillRule, height, offset, stopColor, stroke, strokeWidth, transform, viewBox, width, x, x1, x2, y, y1, y2)
 import Update exposing (Msg(..))
 import View.Commons exposing (defaultError, defaultLoader)
 import View.Gauge
@@ -26,7 +28,7 @@ dashboard { images, wallet, userStakingInfo, rewardInfo, generalStakingInfo } =
                 ]
             , div [ class "row" ]
                 [ div [ class "col-12 col-sm-12 col-md-4 d-flex align-self-stretch" ]
-                    [ viewStakingInfo userStakingInfo generalStakingInfo
+                    [ viewStakingInfo userStakingInfo generalStakingInfo rewardInfo
                     ]
                 , div [ class "col-12 col-sm-6 col-md-4 d-flex align-self-stretch" ]
                     [ viewReward userStakingInfo rewardInfo
@@ -144,8 +146,12 @@ generalInfoAndCTA images wallet =
         ]
 
 
-viewStakingInfo : RemoteData StakingInfoError UserStakingInfo -> RemoteData StakingInfoError GeneralStakingInfo -> Html Msg
-viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo =
+viewStakingInfo :
+    RemoteData StakingInfoError UserStakingInfo
+    -> RemoteData StakingInfoError GeneralStakingInfo
+    -> RemoteData StakingInfoError RewardInfo
+    -> Html Msg
+viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo remoteRewardInfo =
     div [ class "my-3 card Appboard my-md-0 w-100", id "Stats" ]
         [ div [ class "flex flex-col items-center p-4 card-body" ]
             [ h3 [ class "mb-0 text-center text-white card-title" ]
@@ -154,7 +160,7 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo =
                 [ small []
                     [ text "Statistics about staking" ]
                 ]
-            , case RemoteData.map2 Tuple.pair remoteGeneralStakingInfo remoteStakingInfo of
+            , case RemoteData.map3 (\stakingInfo userStakingInfo rewardInfo -> ( stakingInfo, userStakingInfo, rewardInfo )) remoteGeneralStakingInfo remoteStakingInfo remoteRewardInfo of
                 Loading ->
                     defaultLoader
 
@@ -164,7 +170,7 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo =
                 Failure _ ->
                     defaultError
 
-                Success ( { totalLpStaked }, { amount } ) ->
+                Success ( { totalLpStaked }, { amount }, { fees } ) ->
                     div [ class "pt-3 d-flex align-self-center flex-column" ]
                         [ ul [ class "mt-4 list-unstyled" ]
                             [ li []
@@ -202,7 +208,73 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo =
                                     [ text <| "." ++ decimals ++ " KOMET/ETH LP" ]
                                 ]
                             ]
+                        , div [ class "my-3" ]
+                            [ h6 []
+                                [ text <| String.fromInt fees ++ "% withdraw fees" ]
+                            , feeSlider fees
+                            , small [ class "text-muted" ]
+                                [ text "Current withdraw fees on your NOVA reward" ]
+                            ]
                         ]
+            ]
+        ]
+
+
+feeSlider : Int -> Html Msg
+feeSlider fees =
+    let
+        percentFees : Float
+        percentFees =
+            min 98.0 (100 - ((toFloat <| (fees - 1) * 100) / 29))
+    in
+    svg
+        [ height "20px"
+        , width "100%"
+        ]
+        [ defs []
+            [ linearGradient
+                [ id "linear"
+                , x1 "0%"
+                , x2 "100%"
+                , y1 "50%"
+                , y2 "50%"
+                ]
+                [ stop
+                    [ offset "0%", stopColor "#AA3D3D" ]
+                    []
+                , stop
+                    [ offset "100%", stopColor "#76FFBA" ]
+                    []
+                ]
+            ]
+        , g
+            [ fill "none"
+            , fillRule "evenodd"
+            , stroke "none"
+            , strokeWidth "1"
+            ]
+            [ g [ transform "translate(-402.000000, -799.000000)" ]
+                [ g [ transform "translate(402.000000, 799.000000)" ]
+                    [ rect
+                        [ fill "url(#linear)"
+                        , height "4"
+                        , width "100%"
+                        , x "0"
+                        , y "8"
+                        ]
+                        []
+                    , rect
+                        [ fill "#FFF"
+                        , height "20"
+                        , width "5"
+                        , x <|
+                            String.fromFloat percentFees
+                                ++ "%"
+                        , y "0"
+                        ]
+                        []
+                    ]
+                ]
             ]
         ]
 
