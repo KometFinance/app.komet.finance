@@ -1,4 +1,4 @@
-port module Update exposing
+module Update exposing
     ( Flags
     , Msg(..)
     , init
@@ -14,6 +14,7 @@ import Maybe.Extra
 import Model exposing (AmountInputForm, Images, Modal(..), Model, StakingFormStage(..), WithdrawInputForm)
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, WalletError)
+import Ports
 import RemoteData exposing (RemoteData(..))
 import Result.Extra
 import Time
@@ -43,48 +44,6 @@ type Msg
     | VisibityChange Visibility
 
 
-port connectMetamask : Bool -> Cmd msg
-
-
-port updateWallet : (Json.Decode.Value -> msg) -> Sub msg
-
-
-port requestUserStakingInfo : String -> Cmd msg
-
-
-port updateUserStakingInfo : (Json.Decode.Value -> msg) -> Sub msg
-
-
-port requestGeneralStakingInfo : () -> Cmd msg
-
-
-port updateGeneralStakingInfo : (Json.Decode.Value -> msg) -> Sub msg
-
-
-port askContractApproval : Json.Encode.Value -> Cmd msg
-
-
-port contractApprovalResponse : (Json.Encode.Value -> msg) -> Sub msg
-
-
-port sendDeposit : Json.Encode.Value -> Cmd msg
-
-
-port depositResponse : (Json.Encode.Value -> msg) -> Sub msg
-
-
-port withdraw : Json.Encode.Value -> Cmd msg
-
-
-port withdrawResponse : (Json.Encode.Value -> msg) -> Sub msg
-
-
-port updateReward : (Json.Decode.Value -> msg) -> Sub msg
-
-
-port poolReward : String -> Cmd msg
-
-
 type alias Flags =
     Images
 
@@ -101,8 +60,8 @@ init images =
       , visibility = Browser.Events.Visible
       }
     , Cmd.batch
-        [ connectMetamask False
-        , requestGeneralStakingInfo ()
+        [ Ports.connectMetamask False
+        , Ports.requestGeneralStakingInfo ()
         ]
     )
 
@@ -117,7 +76,7 @@ update msg model =
             ( { model | visibility = visibility }, Cmd.none )
 
         Connect ->
-            ( { model | wallet = Loading }, connectMetamask True )
+            ( { model | wallet = Loading }, Ports.connectMetamask True )
 
         UpdateWallet newWallet ->
             let
@@ -138,8 +97,8 @@ update msg model =
             , Result.Extra.unwrap Cmd.none
                 (\{ address } ->
                     Cmd.batch
-                        [ requestUserStakingInfo address
-                        , poolReward address
+                        [ Ports.requestUserStakingInfo address
+                        , Ports.poolReward address
                         ]
                 )
                 newWallet
@@ -167,7 +126,7 @@ update msg model =
                 |> RemoteData.unwrap Cmd.none
                     (\wallet ->
                         if isCurrentlyStaking then
-                            poolReward wallet.address
+                            Ports.poolReward wallet.address
 
                         else
                             Cmd.none
@@ -219,7 +178,7 @@ update msg model =
             updateWithWalletAndStakingModal model <|
                 \wallet form ->
                     ( { model | modal = Just <| StakingDetail { form | request = Loading } }
-                    , askContractApproval <|
+                    , Ports.askContractApproval <|
                         Json.Encode.object
                             [ ( "userAddress", Json.Encode.string wallet.address )
                             , ( "amount", Utils.BigInt.encode form.amount )
@@ -252,7 +211,7 @@ update msg model =
                         | modal =
                             Just <| StakingDetail { form | request = Loading }
                       }
-                    , sendDeposit <|
+                    , Ports.sendDeposit <|
                         Json.Encode.object
                             [ ( "userAddress", Json.Encode.string wallet.address )
                             , ( "amount", Json.Encode.string <| BigInt.toString form.amount )
@@ -264,8 +223,8 @@ update msg model =
                 \_ _ ->
                     ( { model | modal = Nothing }
                     , Cmd.batch
-                        [ connectMetamask False
-                        , requestGeneralStakingInfo ()
+                        [ Ports.connectMetamask False
+                        , Ports.requestGeneralStakingInfo ()
                         ]
                     )
 
@@ -273,7 +232,7 @@ update msg model =
             updateWithWalletAndStakingModal model <|
                 \_ form ->
                     ( { model | modal = Just <| StakingDetail { form | request = RemoteData.Failure () } }
-                    , connectMetamask False
+                    , Ports.connectMetamask False
                     )
 
         ShowWithdrawConfirmation False ->
@@ -297,7 +256,7 @@ update msg model =
                                         | request = Loading
                                     }
                       }
-                    , withdraw <|
+                    , Ports.withdraw <|
                         Json.Encode.object
                             [ ( "amount", Utils.BigInt.encode form.amount )
                             , ( "userAddress", Json.Encode.string wallet.address )
@@ -306,7 +265,7 @@ update msg model =
                 )
 
         WithdrawResponse (Ok ()) ->
-            ( { model | modal = Nothing }, connectMetamask False )
+            ( { model | modal = Nothing }, Ports.connectMetamask False )
 
         WithdrawResponse (Err ()) ->
             updateWithWalletAndWithdrawModal model
@@ -320,13 +279,13 @@ update msg model =
                     (\wallet ->
                         ( model
                         , Cmd.batch
-                            [ connectMetamask False
+                            [ Ports.connectMetamask False
                             , if RemoteData.unwrap False isStaking model.userStakingInfo then
-                                poolReward wallet.address
+                                Ports.poolReward wallet.address
 
                               else
                                 Cmd.none
-                            , requestGeneralStakingInfo ()
+                            , Ports.requestGeneralStakingInfo ()
                             ]
                         )
                     )
@@ -384,7 +343,7 @@ subscriptions : Model -> Sub Msg
 subscriptions { wallet, modal, visibility } =
     Sub.batch
         [ Browser.Events.onVisibilityChange VisibityChange
-        , updateWallet
+        , Ports.updateWallet
             (Json.Decode.decodeValue Model.Wallet.decoder
                 >> Result.mapError Model.Wallet.WrongJson
                 >> Result.andThen identity
@@ -394,17 +353,17 @@ subscriptions { wallet, modal, visibility } =
             |> RemoteData.unwrap Sub.none
                 (\_ ->
                     Sub.batch
-                        [ updateUserStakingInfo
+                        [ Ports.updateUserStakingInfo
                             (Json.Decode.decodeValue Model.StakingInfo.decoderUserInfo
                                 >> Result.mapError Model.StakingInfo.WrongJson
                                 >> UpdateUserStakingInfo
                             )
-                        , withdrawResponse
+                        , Ports.withdrawResponse
                             (Json.Decode.decodeValue Model.StakingInfo.decoderWithdraw
                                 >> Result.mapError (\_ -> ())
                                 >> WithdrawResponse
                             )
-                        , updateReward
+                        , Ports.updateReward
                             (Json.Decode.decodeValue Model.StakingInfo.decoderReward
                                 >> Result.mapError Model.StakingInfo.WrongJson
                                 >> UpdateReward
@@ -417,7 +376,7 @@ subscriptions { wallet, modal, visibility } =
                             Sub.none
                         ]
                 )
-        , updateGeneralStakingInfo
+        , Ports.updateGeneralStakingInfo
             (Json.Decode.decodeValue Model.StakingInfo.decoderGeneralInfo
                 >> Result.mapError Model.StakingInfo.WrongJson
                 >> UpdateGeneralStakingInfo
@@ -438,12 +397,12 @@ subscriptions { wallet, modal, visibility } =
                                     Sub.none
                                     (\_ ->
                                         Sub.batch
-                                            [ contractApprovalResponse
+                                            [ Ports.contractApprovalResponse
                                                 (Json.Decode.decodeValue Model.StakingInfo.decoderApproval
                                                     >> Result.mapError (\_ -> ())
                                                     >> ApprovalResponse
                                                 )
-                                            , depositResponse
+                                            , Ports.depositResponse
                                                 (Json.Decode.decodeValue Model.StakingInfo.decoderDeposit
                                                     >> Result.mapError (\_ -> ())
                                                     >> DepositResponse
@@ -455,7 +414,7 @@ subscriptions { wallet, modal, visibility } =
                             wallet
                                 |> RemoteData.unwrap Sub.none
                                     (\_ ->
-                                        withdrawResponse
+                                        Ports.withdrawResponse
                                             (Json.Decode.decodeValue
                                                 Model.StakingInfo.decoderWithdraw
                                                 >> Result.mapError (\_ -> ())
