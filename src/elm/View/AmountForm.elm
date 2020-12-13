@@ -318,7 +318,7 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                                         Deposit ->
                                             [ text "You need to put at least "
                                             , span [ class "font-bold text-black" ] [ text "0.1" ]
-                                            , text " KOMET/ETH LP to join the pool"
+                                            , text " KOMET/ETH LP to add tokens to the pool"
                                             ]
                         )
                 , button
