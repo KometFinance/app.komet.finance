@@ -28,6 +28,7 @@ type Msg
     | UpdateGeneralStakingInfo (Result StakingInfoError GeneralStakingInfo)
     | UpdateReward (Result StakingInfoError RewardInfo)
     | ShowStakingForm Bool
+    | ShowFeeExplanation Bool
     | ShowWithdrawConfirmation Bool
     | UpdateStakingForm AmountInputForm
     | UpdateWithdrawForm WithdrawInputForm
@@ -180,6 +181,12 @@ update msg model =
         ShowStakingForm True ->
             ( { model | modal = Just <| StakingDetail Model.defaultAmountInputForm }, Cmd.none )
 
+        ShowFeeExplanation True ->
+            ( { model | modal = Just FeeExplanation }, Cmd.none )
+
+        ShowFeeExplanation False ->
+            ( { model | modal = Nothing }, Cmd.none )
+
         UpdateStakingForm form ->
             updateWithWalletAndStakingModal model <|
                 \_ _ ->
@@ -247,7 +254,12 @@ update msg model =
         DepositResponse (Ok ()) ->
             updateWithWalletAndStakingModal model <|
                 \_ _ ->
-                    ( { model | modal = Nothing }, connectMetamask False )
+                    ( { model | modal = Nothing }
+                    , Cmd.batch
+                        [ connectMetamask False
+                        , requestGeneralStakingInfo ()
+                        ]
+                    )
 
         DepositResponse (Err ()) ->
             updateWithWalletAndStakingModal model <|
@@ -326,6 +338,9 @@ updateWithWalletAndStakingModal model updater =
                     MoneyDetail ->
                         ( model, Cmd.none )
 
+                    FeeExplanation ->
+                        ( model, Cmd.none )
+
                     StakingDetail form ->
                         updater wallet form
 
@@ -340,6 +355,9 @@ updateWithWalletAndWithdrawModal model updater =
         (\modal wallet _ ->
             case modal of
                 MoneyDetail ->
+                    ( model, Cmd.none )
+
+                FeeExplanation ->
                     ( model, Cmd.none )
 
                 StakingDetail _ ->
@@ -401,6 +419,9 @@ subscriptions { wallet, modal, visibility } =
                 (\justModal ->
                     case justModal of
                         MoneyDetail ->
+                            Sub.none
+
+                        FeeExplanation ->
                             Sub.none
 
                         StakingDetail _ ->

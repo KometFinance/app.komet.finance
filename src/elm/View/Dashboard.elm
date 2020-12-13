@@ -11,10 +11,9 @@ import Model.Wallet exposing (Wallet, canStake)
 import RemoteData exposing (RemoteData(..))
 import Round
 import Svg exposing (defs, g, linearGradient, rect, stop, svg)
-import Svg.Attributes exposing (fill, fillRule, height, offset, stopColor, stroke, strokeWidth, transform, viewBox, width, x, x1, x2, y, y1, y2)
+import Svg.Attributes exposing (fill, fillRule, height, offset, stopColor, stroke, strokeWidth, transform, width, x, x1, x2, y, y1, y2)
 import Update exposing (Msg(..))
 import View.Commons exposing (defaultError, defaultLoader)
-import View.Gauge
 
 
 dashboard : Model -> Html Msg
@@ -28,13 +27,13 @@ dashboard { images, wallet, userStakingInfo, rewardInfo, generalStakingInfo } =
                 ]
             , div [ class "row" ]
                 [ div [ class "col-12 col-sm-12 col-md-4 d-flex align-self-stretch" ]
-                    [ viewStakingInfo userStakingInfo generalStakingInfo rewardInfo
+                    [ viewStakingInfo userStakingInfo generalStakingInfo
                     ]
                 , div [ class "col-12 col-sm-6 col-md-4 d-flex align-self-stretch" ]
                     [ viewReward userStakingInfo rewardInfo
                     ]
                 , div [ class "col-12 col-sm-6 col-md-4 d-flex align-self-stretch" ]
-                    [ viewFidelity userStakingInfo
+                    [ viewFidelity rewardInfo
                     ]
                 ]
             ]
@@ -149,9 +148,8 @@ generalInfoAndCTA images wallet =
 viewStakingInfo :
     RemoteData StakingInfoError UserStakingInfo
     -> RemoteData StakingInfoError GeneralStakingInfo
-    -> RemoteData StakingInfoError RewardInfo
     -> Html Msg
-viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo remoteRewardInfo =
+viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo =
     div [ class "my-3 card Appboard my-md-0 w-100", id "Stats" ]
         [ div [ class "flex flex-col items-center p-4 card-body" ]
             [ h3 [ class "mb-0 text-center text-white card-title" ]
@@ -160,7 +158,7 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo remoteRewardInfo =
                 [ small []
                     [ text "Statistics about staking" ]
                 ]
-            , case RemoteData.map3 (\stakingInfo userStakingInfo rewardInfo -> ( stakingInfo, userStakingInfo, rewardInfo )) remoteGeneralStakingInfo remoteStakingInfo remoteRewardInfo of
+            , case RemoteData.map2 Tuple.pair remoteGeneralStakingInfo remoteStakingInfo of
                 Loading ->
                     defaultLoader
 
@@ -170,7 +168,7 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo remoteRewardInfo =
                 Failure _ ->
                     defaultError
 
-                Success ( { totalLpStaked }, { amount }, { fees } ) ->
+                Success ( { totalLpStaked }, { amount } ) ->
                     div [ class "pt-3 d-flex align-self-center flex-column" ]
                         [ ul [ class "mt-4 list-unstyled" ]
                             [ li []
@@ -207,13 +205,6 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo remoteRewardInfo =
                                 , small []
                                     [ text <| "." ++ decimals ++ " KOMET/ETH LP" ]
                                 ]
-                            ]
-                        , div [ class "my-3" ]
-                            [ h6 []
-                                [ text <| String.fromInt fees ++ "% withdraw fees" ]
-                            , feeSlider fees
-                            , small [ class "text-muted" ]
-                                [ text "Current withdraw fees on your NOVA reward" ]
                             ]
                         ]
             ]
@@ -279,24 +270,34 @@ feeSlider fees =
         ]
 
 
-viewFidelity : RemoteData StakingInfoError UserStakingInfo -> Html Msg
-viewFidelity _ =
+viewFidelity : RemoteData StakingInfoError RewardInfo -> Html Msg
+viewFidelity remoteRewardInfo =
     div [ class "my-3 card Appboard my-md-0 w-100", id "PlasmaPower" ]
         [ div [ class "p-4 card-body" ]
             [ h3 [ class "mb-0 text-center card-title" ]
-                [ text "PlasmaPower" ]
+                [ text "Fee breakdown" ]
             , p [ class "text-center text-muted" ]
                 [ small []
                     [ text "Your staking fidelity" ]
                 ]
-
-            -- , div [ class "flex items-center justify-center flex-grow mx-auto flex-column w-75" ]
-            -- [ View.Gauge.view 1 3
-            -- ]
-            -- , p [ class "mt-2 text-sm text-center alert text-muted" ]
-            -- [ text "⚠ This gauge is not working yet ⚠"
-            -- , br [] []
-            -- , text "All the features required to show the information is there, we just need a bit more dev time to make it pretty, thanks for your patience and understanding"
-            -- ]
+            , RemoteData.toMaybe remoteRewardInfo
+                |> Html.Extra.viewMaybe
+                    (\{ fees } ->
+                        div [ class "my-3" ]
+                            [ h6 []
+                                [ text <| String.fromInt fees ++ "% withdraw fees" ]
+                            , feeSlider fees
+                            , small [ class "text-muted" ]
+                                [ text "Current withdraw fees on your NOVA reward" ]
+                            ]
+                    )
+            , div [ class "p-2 text-left card text-muted space-y-2" ]
+                [ p [ class "text-justify" ]
+                    [ text "Fees only apply to withdrawing the NOVA you get as a reward for staking. "
+                    , span [ class "text-primary" ]
+                        [ text "We will never tax your KOMET/ETH LP tokens transactions!" ]
+                    ]
+                , a [ class "btn btn-link", onClick <| ShowFeeExplanation True ] [ text "Read More" ]
+                ]
             ]
         ]

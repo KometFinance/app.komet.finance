@@ -1,8 +1,8 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils'
 import ERC20ABI from '../../abis/ERC20.json'
-import UNIVERSE from '../../abis/MasterUniverse.json'
-// import debug from './debug'
+import UNIVERSE from '../../abis/MasterUniverse2.json'
+import debug from './debug'
 
 const MAX_TIMEOUT = 30 * 1000 // 30 seconds
 
@@ -129,13 +129,17 @@ export const requestReward = async (
     universeAddress
   )
   try {
+    debug('calling pendingNova with ', userAddress)
     const pending = await universeContract.methods
       .pendingNova('0', userAddress)
       .call()
-    isRunningAlready = false
+    debug('pending -> ', pending)
+    debug('calling calculateFeesPercentage with ', userAddress)
     const fees = await universeContract.methods
       .calculateFeesPercentage('0', userAddress)
       .call()
+    isRunningAlready = false
+    debug('fees ->', fees)
     return { pending, fees }
   } catch (err) {
     isRunningAlready = false
@@ -147,13 +151,11 @@ export type StakingState = { totalLpStaked: string };
 
 export const requestGeneralStakingInfo = async (
   web3: Web3,
+  lpAddress: string,
   universeAddress: string
 ): Promise<StakingState> => {
-  const universeContract = new web3.eth.Contract(
-    (UNIVERSE.abi as unknown) as AbiItem,
-    universeAddress
-  )
-  return await universeContract.methods.poolInfo('0').call()
+  const totalLpStaked = await getBalance(web3, lpAddress, universeAddress)
+  return { totalLpStaked }
 }
 
 export type ContractApprovalArg = {

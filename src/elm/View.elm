@@ -1,7 +1,7 @@
 module View exposing (view)
 
 import Browser exposing (Document)
-import Html exposing (Html, a, button, div, footer, img, li, nav, small, span, text, ul)
+import Html exposing (Html, a, br, button, div, footer, img, li, nav, p, small, span, text, ul)
 import Html.Attributes exposing (alt, attribute, class, href, id, src, style, target, type_, width)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
@@ -11,7 +11,7 @@ import Model.Wallet exposing (Wallet, WalletError(..))
 import RemoteData exposing (RemoteData(..))
 import Update exposing (Msg(..))
 import View.AmountForm exposing (stakingModal, withdrawModal)
-import View.Commons exposing (defaultLoader)
+import View.Commons exposing (defaultLoader, modal)
 import View.Dashboard exposing (dashboard)
 
 
@@ -97,6 +97,16 @@ view ({ wallet, userStakingInfo, rewardInfo, images, modal } as model) =
                                             userStakingInfo
                                             rewardInfo
                                             |> RemoteData.withDefault Html.Extra.nothing
+
+                                    Model.FeeExplanation ->
+                                        div [ onClick <| ShowFeeExplanation False ]
+                                            [ feeExplanationModal
+                                            , div
+                                                [ onClick <| ShowFeeExplanation False
+                                                , class "modal-backdrop fade show"
+                                                ]
+                                                []
+                                            ]
                             )
                     , appFooter images
                     ]
@@ -104,6 +114,43 @@ view ({ wallet, userStakingInfo, rewardInfo, images, modal } as model) =
             ]
         ]
     }
+
+
+feeExplanationModal : Html Msg
+feeExplanationModal =
+    modal
+        { onClose = Just <| ShowFeeExplanation False
+        , progress = 0
+        , content =
+            div []
+                [ p [ class "text-justify" ]
+                    [ text "Fees only apply to withdrawing the NOVA you get as a reward for staking. "
+                    , span [ class "text-primary" ]
+                        [ text "We will never tax your KOMET/ETH LP tokens transactions!" ]
+                    , br [] []
+                    , text <| "Fees start at "
+                    , span [ class "text-secondary" ] [ text "30%" ]
+                    , text " and decrease by "
+                    , span [ class "text-primary" ] [ text "1%" ]
+                    , text " every second day until reaching "
+                    , span [ class "text-prumary" ]
+                        [ text
+                            "1%"
+                        ]
+                    , text " (60 days after staking)."
+                    ]
+                , p [ class "text-justify" ]
+                    [ span [ class "font-bold" ] [ text "Remember:" ]
+                    , text " adding funds to your stake will not reset the fee counter. You will claim your NOVA rewards when adding to your stake but your fees won't reset to 30%."
+                    , br [] []
+                    , text "E.g.: if you have 10 NOVA waiting as rewards when adding to your stake and you have been staking for 10 days, your fee level will be at 25%. You will receive 7.5 NOVA but your fees will remain 25% and continue to decrease every day."
+                    , br [] []
+                    , text "The same applies if you use the button claim rewards, however if you elect to withdraw all or part of your stake, your fees will reset to 30%."
+                    , br [] []
+                    , text "E.g. you have been staking for 30 days, your fees are now at 15%, and you have 20 NOVA as a pending reward. Withdrawing any amount of your stake at this point means you will receive 17 NOVA, but your fees will then go back to 30%."
+                    ]
+                ]
+        }
 
 
 header : Model -> Html.Html msg
@@ -155,8 +202,6 @@ coinPull ( badgeSuffix, balance, moneyTag ) =
             [ class "btn btn-sm btn-dark d-flex align-items-center"
 
             -- TODO replace that with a proper modal stuff
-            , attribute "data-target" "#LPmodal"
-            , attribute "data-toggle" "modal"
             , type_ "button"
             ]
             [ span [ class <| "mr-2 badge badge-" ++ badgeSuffix ]

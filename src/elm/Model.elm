@@ -35,6 +35,7 @@ type Modal
       MoneyDetail
     | StakingDetail AmountInputForm
     | WithdrawDetail WithdrawInputForm
+    | FeeExplanation
 
 
 type alias WithdrawInputForm =

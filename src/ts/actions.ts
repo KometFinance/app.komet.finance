@@ -1,8 +1,8 @@
 import Web3 from 'web3'
-import debug from './debug'
 import { Addresses, getAccountInfo, monitorChanges } from './kometManager'
 import * as KometManager from './kometManager'
 import * as ports from './ports'
+import debug from './debug'
 
 const connect = (app: any, web3: Web3, addresses: Addresses) => async (
   withRequest: boolean
@@ -14,7 +14,7 @@ const connect = (app: any, web3: Web3, addresses: Addresses) => async (
   } catch (err) {
     ports.updateWallet(app)({
       err: withRequest // send the error on requested update
-        ? debug.log('error while connecting -> ', err.message)
+        ? err.message
         : 'SOFT_CONNECT_FAILED'
     })
   }
@@ -46,10 +46,11 @@ const requestReward = (app: any, web3: Web3, addresses: Addresses) => async (
       addresses.universe,
       userAddress
     )
+    debug('requestReward -> ', info)
     if (info) {
       ports.updateReward(app)({ ok: info })
     } else {
-      debug('there was already someone waiting for it ... get in line')
+      // already a request ongoing for that ... let's wait for the return
     }
   } catch (err) {
     ports.updateReward(app)({ err: 'COULD_NOT_FETCHED' })
@@ -64,6 +65,7 @@ const requestGeneralStakingInfo = (
   try {
     const info = await KometManager.requestGeneralStakingInfo(
       web3,
+      addresses.lp,
       addresses.universe
     )
     ports.updateGeneralStakingInfo(app)({ ok: info })
