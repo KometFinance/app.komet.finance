@@ -56,6 +56,7 @@ withdrawModal _ ({ request } as withdrawInfo) userStakingInfo rewardInfo =
                 , onSubmitMsg = Withdraw
                 , updateMsg = UpdateWithdrawForm
                 , available = userStakingInfo.amount
+                , validityTest = \amount -> BigInt.gt amount Model.StakingInfo.minStaking
                 , move = Withdrawal
                 }
                 withdrawInfo
@@ -97,6 +98,15 @@ stakingModal stakingForm wallet maybeStakingAndRewards =
                         , onSubmitMsg = AskContractApproval
                         , updateMsg = UpdateStakingForm
                         , available = wallet.lpBalance
+                        , validityTest =
+                            \amount ->
+                                let
+                                    left =
+                                        BigInt.sub (Model.Balance.toBigInt wallet.lpBalance) amount
+                                in
+                                (BigInt.gt amount <| BigInt.fromInt 0)
+                                    && (left == BigInt.fromInt 0)
+                                    || BigInt.gte left Model.StakingInfo.minStaking
                         , move = Deposit
                         }
                         stakingForm
@@ -160,6 +170,7 @@ type alias InputConfig a =
     , onSubmitMsg : Msg
     , updateMsg : Form a -> Msg
     , available : Balance
+    , validityTest : BigInt -> Bool
     , move : Move
     }
 
@@ -178,7 +189,7 @@ type Move
 
 
 viewInput : InputConfig a -> Form a -> Maybe ( UserStakingInfo, RewardInfo ) -> Html Msg
-viewInput { title, amountDescription, buttonText, buttonTextPending, onSubmitMsg, updateMsg, available, move } ({ amountInput, request } as inputForm) maybeStakingAndRewards =
+viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards =
     let
         isLoading : Bool
         isLoading =
@@ -186,7 +197,7 @@ viewInput { title, amountDescription, buttonText, buttonTextPending, onSubmitMsg
 
         availableBigInt : BigInt
         availableBigInt =
-            Model.Balance.toBigInt available
+            Model.Balance.toBigInt config.available
 
         maybeAmount : Maybe BigInt
         maybeAmount =
@@ -197,11 +208,11 @@ viewInput { title, amountDescription, buttonText, buttonTextPending, onSubmitMsg
         isValid =
             maybeAmount
                 |> Maybe.Extra.unwrap False
-                    (\validAmount -> BigInt.gt validAmount (BigInt.fromInt 0))
+                    config.validityTest
 
         setMax : Msg
         setMax =
-            updateMsg <|
+            config.updateMsg <|
                 { inputForm
                     | amount = availableBigInt
                     , amountInput = Utils.BigInt.toBaseUnit availableBigInt
@@ -209,20 +220,20 @@ viewInput { title, amountDescription, buttonText, buttonTextPending, onSubmitMsg
 
         validateInput : Msg
         validateInput =
-            updateMsg <|
+            config.updateMsg <|
                 { inputForm
                     | amount = maybeAmount |> Maybe.withDefault (BigInt.fromInt 0)
                     , amountInput = Maybe.Extra.unwrap "" Utils.BigInt.toBaseUnit maybeAmount
                 }
 
         updateInput =
-            \str -> updateMsg <| { inputForm | amountInput = str }
+            \str -> config.updateMsg <| { inputForm | amountInput = str }
     in
     div [ class "p-5 card-body" ]
         [ h3 [ class "text-center card-title" ]
-            [ text title ]
+            [ text config.title ]
         , p [ class "mt-4 mb-0 text-center lead gradient_lp" ]
-            [ text <| Model.Balance.humanReadableBalance 2 available ]
+            [ text <| Model.Balance.humanReadableBalance 2 config.available ]
         , p [ class "text-center text-muted" ]
             [ small []
                 [ text "Amount available" ]
@@ -231,7 +242,7 @@ viewInput { title, amountDescription, buttonText, buttonTextPending, onSubmitMsg
             [ class "pt-4"
             , onSubmit <|
                 if isValid then
-                    onSubmitMsg
+                    config.onSubmitMsg
 
                 else
                     NoOp
@@ -270,32 +281,52 @@ viewInput { title, amountDescription, buttonText, buttonTextPending, onSubmitMsg
                         ]
                     ]
                 , small [ class "py-2 form-text text-muted", id "" ]
-                    [ text amountDescription ]
+                    [ text config.amountDescription ]
                 , Maybe.withDefault
                     Html.Extra.nothing
                   <|
                     Maybe.map2
                         (\( userStakingInfo, rewardInfo ) amount ->
                             if Model.StakingInfo.isStaking userStakingInfo && BigInt.gt amount (BigInt.fromInt 0) then
-                                costBreakdown userStakingInfo rewardInfo amount move
+                                costBreakdown userStakingInfo rewardInfo amount config.move
 
                             else
                                 Html.Extra.nothing
                         )
                         maybeStakingAndRewards
                         maybeAmount
+                , maybeAmount
+                    |> Html.Extra.viewMaybe
+                        (\_ ->
+                            Html.Extra.viewIf (not isValid) <|
+                                -- we've got a amount but it's not valid => minimum limit
+                                p [ class "alert alert-warning" ]
+                                <|
+                                    case config.move of
+                                        Withdrawal ->
+                                            [ text "The minimal amount to stay in the pool is  "
+                                            , span [ class "text-primary" ] [ text "0.1" ]
+                                            , text " KOMET/ETH LP"
+                                            ]
+
+                                        Deposit ->
+                                            [ text "You need to put at least "
+                                            , span [ class "text-primary" ] [ text "0.1" ]
+                                            , text "KOMET/ETH LP to join the pool"
+                                            ]
+                        )
                 , button
                     [ class "flex flex-row items-center justify-center mt-5 mb-0 btn btn-block btn-primary space-x-4"
-                    , disabled isLoading
+                    , disabled <| isLoading && not isValid
                     ]
                   <|
                     if isLoading then
                         [ span [ class "spinner-border" ] []
-                        , span [] [ text buttonTextPending ]
+                        , span [] [ text config.buttonTextPending ]
                         ]
 
                     else
-                        [ text buttonText ]
+                        [ text config.buttonText ]
                 , if isLoading then
                     wankyLoader
 
