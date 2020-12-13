@@ -45,7 +45,8 @@ shiftXBy num by =
 
 simpleFromBaseUnitCases : List ( String, BigInt )
 simpleFromBaseUnitCases =
-    [ ( "1", shiftXBy 1 18 )
+    [ ( "0", BigInt.fromInt 0 )
+    , ( "1", shiftXBy 1 18 )
     , ( "123123", shiftXBy 123123 18 )
     , ( "10", shiftXBy 10 18 )
     , ( "100", shiftXBy 100 18 )
@@ -73,7 +74,8 @@ toBaseUnitTests =
 
 simpleToBaseUnitCases : List ( BigInt, String )
 simpleToBaseUnitCases =
-    [ ( shiftXBy 1 18, "1" )
+    [ ( BigInt.fromInt 0, "0" )
+    , ( shiftXBy 1 18, "1" )
     , ( shiftXBy 1 17, "0.1" )
     , ( shiftXBy 1 16, "0.01" )
     , ( shiftXBy 1 15, "0.001" )
