@@ -2,6 +2,7 @@ import Web3 from 'web3'
 import { Addresses, getAccountInfo, monitorChanges } from './kometManager'
 import * as KometManager from './kometManager'
 import * as ports from './ports'
+import debug from './debug'
 
 const connect = (app: any, web3: Web3, addresses: Addresses) => async (
   withRequest: boolean
@@ -45,6 +46,7 @@ const requestReward = (app: any, web3: Web3, addresses: Addresses) => async (
       addresses.universe,
       userAddress
     )
+    debug('requestReward -> ', info)
     if (info) {
       ports.updateReward(app)({ ok: info })
     } else {

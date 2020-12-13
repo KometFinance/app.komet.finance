@@ -10,13 +10,20 @@ module Model.StakingInfo exposing
     , decoderUserInfo
     , decoderWithdraw
     , isStaking
+    , minStaking
     )
 
+import BigInt exposing (BigInt)
 import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline exposing (required)
 import Model.Balance exposing (Balance, Fees)
 import Time exposing (Posix)
+
+
+minStaking : BigInt
+minStaking =
+    BigInt.pow (BigInt.fromInt 10) (BigInt.fromInt 17)
 
 
 type alias UserStakingInfo =

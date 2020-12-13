@@ -49,6 +49,7 @@ jobs:
         NOVA: ${{ secrets.NOVA }}
         MU: ${{ secrets.MU }}
     - run: yarn lint
+    - run: yarn test
 
   deploy:
     needs: lint
@@ -81,7 +82,7 @@ jobs:
 
     - run: yarn build:prod
       env:
-        NODE_ENV: production
+        NODE_ENV: development
         KOMET: ${{ secrets.KOMET }}
         LP: ${{ secrets.LP }}
         NOVA: ${{ secrets.NOVA }}

@@ -131,10 +131,10 @@ export const requestReward = async (
     const pending = await universeContract.methods
       .pendingNova('0', userAddress)
       .call()
-    isRunningAlready = false
     const fees = await universeContract.methods
       .calculateFeesPercentage('0', userAddress)
       .call()
+    isRunningAlready = false
     return { pending, fees }
   } catch (err) {
     isRunningAlready = false

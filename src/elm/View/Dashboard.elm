@@ -297,24 +297,13 @@ viewFidelity remoteRewardInfo =
                                 [ text "Current withdraw fees on your NOVA reward" ]
                             ]
                     )
-            , div [ class "p-4 text-left card text-muted space-y-2" ]
+            , div [ class "p-2 text-left card text-muted space-y-2" ]
                 [ p [ class "text-justify" ]
                     [ text "Fees only apply to withdrawing the NOVA you get as a reward for staking. "
                     , span [ class "text-primary" ]
                         [ text "We will never tax your KOMET/ETH LP tokens transactions!" ]
-                    , br [] []
-                    , text <| "Fees start at "
-                    , span [ class "text-secondary" ] [ text "30%" ]
-                    , text " and decrease by "
-                    , span [ class "text-primary" ] [ text "0.5%" ]
-                    , text " every day until "
-                    , span [ class "text-prumary" ]
-                        [ text
-                            "1%"
-                        ]
-                    , text " (60 days after staking)."
                     ]
-                , a [ onClick <| ShowFeeExplanation True ] [ text "read more" ]
+                , a [ class "btn btn-link", onClick <| ShowFeeExplanation True ] [ text "Read More" ]
                 ]
             ]
         ]
