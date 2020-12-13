@@ -49,6 +49,7 @@ jobs:
         NOVA: ${{ secrets.NOVA }}
         MU: ${{ secrets.MU }}
     - run: yarn lint
+    - run: yarn test
 
   deploy:
     needs: lint

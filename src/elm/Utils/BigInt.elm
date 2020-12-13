@@ -26,6 +26,9 @@ fromBaseUnit =
     String.split "."
         >> (\split ->
                 case split of
+                    [ "" ] ->
+                        Nothing
+
                     [ unit ] ->
                         unit
                             ++ String.repeat baseFactor "0"
@@ -50,11 +53,19 @@ toBaseUnit =
     BigInt.toString
         >> (\str ->
                 let
-                    unit =
+                    unit_ =
                         String.dropRight baseFactor str
+
+                    unit =
+                        if String.isEmpty unit_ then
+                            "0"
+
+                        else
+                            unit_
 
                     decimals =
                         String.right baseFactor str
+                            |> String.padLeft baseFactor '0'
                             |> String.foldr
                                 (\c maybeStr ->
                                     case ( c, maybeStr ) of
