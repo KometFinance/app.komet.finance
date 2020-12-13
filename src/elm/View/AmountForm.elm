@@ -106,7 +106,7 @@ stakingModal stakingForm wallet maybeStakingAndRewards =
                         , onSubmitMsg = AskContractApproval
                         , updateMsg = UpdateStakingForm
                         , available = wallet.lpBalance
-                        , validityTest = \amount -> BigInt.gt amount Model.StakingInfo.minStaking
+                        , validityTest = \amount -> BigInt.gte amount Model.StakingInfo.minStaking
                         , move = Deposit
                         }
                         stakingForm
