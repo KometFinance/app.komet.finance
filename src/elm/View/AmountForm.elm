@@ -56,7 +56,15 @@ withdrawModal _ ({ request } as withdrawInfo) userStakingInfo rewardInfo =
                 , onSubmitMsg = Withdraw
                 , updateMsg = UpdateWithdrawForm
                 , available = userStakingInfo.amount
-                , validityTest = \amount -> BigInt.gt amount Model.StakingInfo.minStaking
+                , validityTest =
+                    \amount ->
+                        let
+                            left =
+                                BigInt.sub (Model.Balance.toBigInt userStakingInfo.amount) amount
+                        in
+                        (BigInt.gt amount <| BigInt.fromInt 0)
+                            && (left == BigInt.fromInt 0)
+                            || BigInt.gte left Model.StakingInfo.minStaking
                 , move = Withdrawal
                 }
                 withdrawInfo
@@ -98,15 +106,7 @@ stakingModal stakingForm wallet maybeStakingAndRewards =
                         , onSubmitMsg = AskContractApproval
                         , updateMsg = UpdateStakingForm
                         , available = wallet.lpBalance
-                        , validityTest =
-                            \amount ->
-                                let
-                                    left =
-                                        BigInt.sub (Model.Balance.toBigInt wallet.lpBalance) amount
-                                in
-                                (BigInt.gt amount <| BigInt.fromInt 0)
-                                    && (left == BigInt.fromInt 0)
-                                    || BigInt.gte left Model.StakingInfo.minStaking
+                        , validityTest = \amount -> BigInt.gt amount Model.StakingInfo.minStaking
                         , move = Deposit
                         }
                         stakingForm
@@ -226,8 +226,14 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                     , amountInput = Maybe.Extra.unwrap "" Utils.BigInt.toBaseUnit maybeAmount
                 }
 
+        updateInput : String -> Msg
         updateInput =
-            \str -> config.updateMsg <| { inputForm | amountInput = str }
+            \str ->
+                config.updateMsg <|
+                    { inputForm
+                        | amountInput = str
+                        , amount = maybeAmount |> Maybe.withDefault (BigInt.fromInt 0)
+                    }
     in
     div [ class "p-5 card-body" ]
         [ h3 [ class "text-center card-title" ]
@@ -305,19 +311,22 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                                     case config.move of
                                         Withdrawal ->
                                             [ text "The minimal amount to stay in the pool is  "
-                                            , span [ class "text-primary" ] [ text "0.1" ]
+                                            , span [ class "font-bold text-black" ] [ text "0.1" ]
                                             , text " KOMET/ETH LP"
                                             ]
 
                                         Deposit ->
                                             [ text "You need to put at least "
-                                            , span [ class "text-primary" ] [ text "0.1" ]
-                                            , text "KOMET/ETH LP to join the pool"
+                                            , span [ class "font-bold text-black" ] [ text "0.1" ]
+                                            , text " KOMET/ETH LP to join the pool"
                                             ]
                         )
                 , button
                     [ class "flex flex-row items-center justify-center mt-5 mb-0 btn btn-block btn-primary space-x-4"
                     , disabled <| isLoading && not isValid
+                    , classList
+                        [ ( "disabled", not isValid )
+                        ]
                     ]
                   <|
                     if isLoading then
