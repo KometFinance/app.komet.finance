@@ -97,6 +97,7 @@ init images =
       , userStakingInfo = NotAsked
       , generalStakingInfo = Loading
       , rewardInfo = NotAsked
+      , oldState = NotAsked
       , visibility = Browser.Events.Visible
       }
     , Cmd.batch
