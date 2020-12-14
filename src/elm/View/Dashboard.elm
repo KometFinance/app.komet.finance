@@ -1,11 +1,12 @@
 module View.Dashboard exposing (dashboard)
 
-import Html exposing (Html, a, br, button, div, h3, h4, h5, h6, hr, img, li, node, p, small, span, text, ul)
+import Html exposing (Html, a, button, div, h3, h4, h5, h6, hr, img, li, node, p, small, span, text, ul)
 import Html.Attributes exposing (attribute, class, disabled, href, id, src, target, type_)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
 import Model exposing (Images, Model)
 import Model.Balance exposing (split)
+import Model.OldState
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, canStake)
 import RemoteData exposing (RemoteData(..))

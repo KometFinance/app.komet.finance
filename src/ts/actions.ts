@@ -148,6 +148,22 @@ const withdraw = (app: any, web3: Web3, addresses: Addresses) => async ({
   }
 }
 
+const requestOldState = (app: any, web3: Web3, addresses: Addresses) => async (
+  userAddress: string
+) => {
+  try {
+    const result = await KometManager.requestOldState({
+      web3,
+      oldUniverseAddress: addresses.oldUniverse,
+      oldNovaAddress: addresses.oldNova,
+      userAddress
+    })
+    ports.updateOldState(app)({ ok: result })
+  } catch (err) {
+    ports.updateOldState(app)({ err: 'COULD_NOT_WITHDRAW' })
+  }
+}
+
 export const hook = (addresses: Addresses, web3: Web3, app: any) => {
   ports.connectMetamask(app)(connect(app, web3, addresses))
   ports.requestUserStakingInfo(app)(
@@ -160,6 +176,7 @@ export const hook = (addresses: Addresses, web3: Web3, app: any) => {
   ports.askContractApproval(app)(askContractApproval(app, web3, addresses))
   ports.sendDeposit(app)(deposit(app, web3, addresses))
   ports.withdraw(app)(withdraw(app, web3, addresses))
+  ports.requestOldState(app)(requestOldState(app, web3, addresses))
 
   // NOTE that should go in a better place but ...
   // let's listen to changes

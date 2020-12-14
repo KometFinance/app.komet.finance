@@ -5,9 +5,11 @@ port module Ports exposing
     , depositResponse
     , poolReward
     , requestGeneralStakingInfo
+    , requestOldState
     , requestUserStakingInfo
     , sendDeposit
     , updateGeneralStakingInfo
+    , updateOldState
     , updateReward
     , updateUserStakingInfo
     , updateWallet
@@ -59,3 +61,9 @@ port updateReward : (Json.Decode.Value -> msg) -> Sub msg
 
 
 port poolReward : String -> Cmd msg
+
+
+port requestOldState : String -> Cmd msg
+
+
+port updateOldState : (Json.Decode.Value -> msg) -> Sub msg

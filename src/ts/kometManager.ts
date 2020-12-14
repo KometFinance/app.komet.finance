@@ -2,6 +2,8 @@ import Web3 from 'web3'
 import { AbiItem } from 'web3-utils'
 import ERC20ABI from '../../abis/ERC20.json'
 import UNIVERSE from '../../abis/MasterUniverse2.json'
+import OLD_UNIVERSE from '../../abis/MasterUniverse.json'
+import debug from './debug'
 
 const MAX_TIMEOUT = 30 * 1000 // 30 seconds
 
@@ -34,6 +36,8 @@ export type Addresses = {
   lp: string;
   nova: string;
   universe: string;
+  oldNova: string;
+  oldUniverse: string;
 };
 
 export type AccountInfo = {
@@ -220,4 +224,35 @@ export const withdraw = async ({
   return await universeContract.methods
     .withdraw('0', amount)
     .send({ from: userAddress })
+}
+
+export type OldStateArg = {
+  web3: Web3;
+  oldUniverseAddress: string;
+  oldNovaAddress: string;
+  userAddress: string;
+};
+export type OldState = {
+  oldStaking: string;
+  oldNova: string;
+};
+
+export const requestOldState = async ({
+  web3,
+  oldUniverseAddress,
+  oldNovaAddress,
+  userAddress
+}: OldStateArg): Promise<OldState> => {
+  const oldUniverseContract = new web3.eth.Contract(
+    (OLD_UNIVERSE.abi as unknown) as AbiItem,
+    oldUniverseAddress
+  )
+  const { amount } = await oldUniverseContract.methods
+    .userInfo('0', userAddress)
+    .call()
+  const oldNova = await getBalance(web3, oldNovaAddress, userAddress)
+  return debug.log('requestOldState response -> ', {
+    oldStaking: amount,
+    oldNova
+  })
 }

@@ -12,6 +12,7 @@ import Json.Decode
 import Json.Encode
 import Maybe.Extra
 import Model exposing (AmountInputForm, Images, Modal(..), Model, StakingFormStage(..), WithdrawInputForm)
+import Model.OldState exposing (OldState)
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, WalletError)
 import Ports
@@ -28,6 +29,7 @@ type Msg
     | UpdateUserStakingInfo (Result StakingInfoError UserStakingInfo)
     | UpdateGeneralStakingInfo (Result StakingInfoError GeneralStakingInfo)
     | UpdateReward (Result StakingInfoError RewardInfo)
+    | UpdateOldState (Result () OldState)
     | ShowStakingForm Bool
     | ShowFeeExplanation Bool
     | ShowWithdrawConfirmation Bool
@@ -98,6 +100,7 @@ update msg model =
                 (\{ address } ->
                     Cmd.batch
                         [ Ports.requestUserStakingInfo address
+                        , Ports.requestOldState address
                         , Ports.poolReward address
                         ]
                 )
@@ -293,6 +296,9 @@ update msg model =
         UpdateReward newReward ->
             ( { model | rewardInfo = RemoteData.fromResult newReward }, Cmd.none )
 
+        UpdateOldState oldState ->
+            ( { model | oldState = RemoteData.fromResult oldState }, Cmd.none )
+
 
 updateWithWalletAndStakingModal : Model -> (Wallet -> AmountInputForm -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
 updateWithWalletAndStakingModal model updater =
@@ -367,6 +373,11 @@ subscriptions { wallet, modal, visibility } =
                             (Json.Decode.decodeValue Model.StakingInfo.decoderReward
                                 >> Result.mapError Model.StakingInfo.WrongJson
                                 >> UpdateReward
+                            )
+                        , Ports.updateOldState
+                            (Json.Decode.decodeValue Model.OldState.decoder
+                                >> Result.mapError (\_ -> ())
+                                >> UpdateOldState
                             )
                         , if visibility == Browser.Events.Visible then
                             Time.every 30000
