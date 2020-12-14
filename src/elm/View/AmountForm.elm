@@ -415,12 +415,3 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                 ]
             ]
         ]
-
-
-
--- , p [ class "alert alert-warning" ] [ text "⚠ Withdrawing will reset your PlasmaPower" ]
--- , Html.Extra.viewIf (RemoteData.isFailure request) <| p [ class "alert alert-danger" ] [ text "⚠ the withdraw could not go through. Try again in a moment." ]
--- , if isLoading then
--- wankyLoader
--- else
--- Html.Extra.nothing

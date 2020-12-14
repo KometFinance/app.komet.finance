@@ -11,7 +11,7 @@ module Model exposing
 
 import BigInt exposing (BigInt)
 import Browser.Events
-import Model.OldState exposing (MigrationStep, OldState)
+import Model.OldState exposing (MigrationState, OldState)
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo)
 import Model.Wallet exposing (Wallet, WalletError)
 import RemoteData exposing (RemoteData(..))
@@ -37,7 +37,7 @@ type Modal
     | StakingDetail AmountInputForm
     | WithdrawDetail WithdrawInputForm
     | FeeExplanation
-    | MigrationDetail MigrationStep
+    | MigrationDetail MigrationState
 
 
 type alias WithdrawInputForm =

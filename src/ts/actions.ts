@@ -80,25 +80,52 @@ const askContractApproval = (
   addresses: Addresses
 ) => async ({
   userAddress,
-  amount
+  amount,
+  from,
+  to
 }: {
   userAddress: string;
   amount: string;
+  from: string;
+  to: string;
 }) => {
   try {
     if (!amount) {
       throw new Error('MISSING_AMOUNT')
     }
+    const fromContractAddress = contractDecoder(addresses, from)
+    const targetContractAddress = contractDecoder(addresses, to)
     const result = await KometManager.askContractApproval({
       web3,
-      lpAddress: addresses.lp,
-      universeAddress: addresses.universe,
+      fromContractAddress,
+      targetContractAddress,
       amount,
       userAddress
     })
     ports.contractApprovalResponse(app)({ ok: result })
   } catch (err) {
     ports.contractApprovalResponse(app)({ err: 'COULD_NOT_CONFIRM' })
+  }
+}
+const contractDecoder = (
+  addresses: Addresses,
+  contractName: string
+): string => {
+  switch (contractName) {
+    case 'LPToken': {
+      return addresses.lp
+    }
+    case 'NOVA-V1': {
+      return addresses.oldNova
+    }
+    case 'MasterUniverse': {
+      return addresses.universe
+    }
+    case 'NovaMigration': {
+      return addresses.migration
+    }
+    default:
+      throw new Error(`unrecognised contract name "${contractName}`)
   }
 }
 
@@ -163,6 +190,22 @@ const requestOldState = (app: any, web3: Web3, addresses: Addresses) => async (
     ports.updateOldState(app)({ err: 'COULD_NOT_WITHDRAW' })
   }
 }
+const requestEmergencyWithdrawal = (
+  app: any,
+  web3: Web3,
+  addresses: Addresses
+) => async (userAddress: string) => {
+  try {
+    const result = await KometManager.emergencyWithdrawal({
+      web3,
+      oldUniverseAddress: addresses.oldUniverse,
+      userAddress
+    })
+    ports.updateEmergencyWithdrawal(app)({ ok: result })
+  } catch (err) {
+    ports.updateEmergencyWithdrawal(app)({ err: 'COULD_NOT_WITHDRAW' })
+  }
+}
 
 export const hook = (addresses: Addresses, web3: Web3, app: any) => {
   ports.connectMetamask(app)(connect(app, web3, addresses))
@@ -177,6 +220,9 @@ export const hook = (addresses: Addresses, web3: Web3, app: any) => {
   ports.sendDeposit(app)(deposit(app, web3, addresses))
   ports.withdraw(app)(withdraw(app, web3, addresses))
   ports.requestOldState(app)(requestOldState(app, web3, addresses))
+  ports.requestEmergencyWithdrawal(app)(
+    requestEmergencyWithdrawal(app, web3, addresses)
+  )
 
   // NOTE that should go in a better place but ...
   // let's listen to changes

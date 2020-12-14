@@ -1,6 +1,14 @@
-module Utils.Json exposing (decodeExactString)
+module Utils.Json exposing
+    ( decodeExactString
+    , decoderOk
+    )
 
 import Json.Decode exposing (Decoder)
+
+
+decoderOk : Decoder ()
+decoderOk =
+    Json.Decode.field "ok" <| Json.Decode.succeed ()
 
 
 decodeExactString : String -> a -> Decoder a

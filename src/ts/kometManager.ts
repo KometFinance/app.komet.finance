@@ -38,6 +38,7 @@ export type Addresses = {
   universe: string;
   oldNova: string;
   oldUniverse: string;
+  migration: string;
 };
 
 export type AccountInfo = {
@@ -159,8 +160,8 @@ export const requestGeneralStakingInfo = async (
 
 export type ContractApprovalArg = {
   web3: Web3;
-  universeAddress: string;
-  lpAddress: string;
+  fromContractAddress: string;
+  targetContractAddress: string;
   userAddress: string;
   amount: string;
 };
@@ -171,14 +172,14 @@ export type Transaction = {
 
 export const askContractApproval = async ({
   web3,
-  lpAddress,
-  universeAddress,
+  fromContractAddress,
+  targetContractAddress,
   userAddress,
   amount
 }: ContractApprovalArg): Promise<Transaction> => {
-  const lpContract = getERC20Contract(web3, lpAddress)
-  return await lpContract.methods
-    .approve(universeAddress, amount)
+  const fromContract = getERC20Contract(web3, fromContractAddress)
+  return await fromContract.methods
+    .approve(targetContractAddress, amount)
     .send({ from: userAddress })
 }
 
@@ -255,4 +256,25 @@ export const requestOldState = async ({
     oldStaking: amount,
     oldNova
   })
+}
+
+export type EmergencyWithdrawalArg = {
+  web3: Web3;
+  oldUniverseAddress: string;
+  userAddress: string;
+};
+
+export const emergencyWithdrawal = async ({
+  web3,
+  oldUniverseAddress,
+  userAddress
+}: EmergencyWithdrawalArg): Promise<any> => {
+  const oldUniverseContract = new web3.eth.Contract(
+    (OLD_UNIVERSE.abi as unknown) as AbiItem,
+    oldUniverseAddress
+  )
+  const response = await oldUniverseContract.methods
+    .emergencyWithdraw('0', userAddress)
+    .call()
+  return debug.log('emergencyWithdraw response -> ', response)
 }

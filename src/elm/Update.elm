@@ -12,7 +12,8 @@ import Json.Decode
 import Json.Encode
 import Maybe.Extra
 import Model exposing (AmountInputForm, Images, Modal(..), Model, StakingFormStage(..), WithdrawInputForm)
-import Model.OldState exposing (MigrationStep, OldState)
+import Model.Balance
+import Model.OldState exposing (MigrationState, MigrationStep(..), OldState)
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, WalletError)
 import Ports
@@ -20,6 +21,7 @@ import RemoteData exposing (RemoteData(..))
 import Result.Extra
 import Time
 import Utils.BigInt
+import Utils.Json
 
 
 type Msg
@@ -34,9 +36,10 @@ type Msg
     | ShowFeeExplanation Bool
     | ShowWithdrawConfirmation Bool
     | ShowMigrationPanel Bool
+    | StartMigration
     | UpdateStakingForm AmountInputForm
     | UpdateWithdrawForm WithdrawInputForm
-    | UpdateMigration MigrationStep
+    | UpdateMigration (Result () ())
     | AskContractApproval
     | ApprovalResponse (Result () ())
     | SendDeposit
@@ -153,16 +156,83 @@ update msg model =
             ( { model | modal = Nothing }, Cmd.none )
 
         ShowMigrationPanel True ->
-            ( { model | modal = Just <| MigrationDetail Model.OldState.Start }, Cmd.none )
+            ( { model | modal = Just <| MigrationDetail Model.OldState.defaultMigrationState }, Cmd.none )
 
         ShowMigrationPanel False ->
             ( { model | modal = Nothing }, Cmd.none )
 
-        UpdateMigration step ->
-            ( { model | modal = Just <| MigrationDetail step }
-              -- TODO based on the step we'll want to trigger some automated commands here
-            , Cmd.none
-            )
+        StartMigration ->
+            updateWithWalletAndMigrationModal model <|
+                \wallet oldState migrationState ->
+                    let
+                        ( nextState, cmd ) =
+                            if Model.Balance.isPositive oldState.oldNova then
+                                ( { migrationState
+                                    | approvingNovaTransition = Loading
+                                    , currentStep = ApprovingNovaTransition
+                                  }
+                                , Ports.requestContractApproval
+                                    { from = Ports.OldNova
+                                    , to = Ports.NovaMigration
+                                    , userAddress = wallet.address
+                                    , amount = Model.Balance.toBigInt oldState.oldNova
+                                    }
+                                )
+
+                            else
+                                ( { migrationState
+                                    | withdrawal = Loading
+                                    , currentStep = EmergencyWithdrawal
+                                  }
+                                , Ports.requestEmergencyWithdrawal wallet.address
+                                )
+                    in
+                    ( { model | modal = Just <| MigrationDetail nextState }, cmd )
+
+        UpdateMigration result ->
+            updateWithWalletAndMigrationModal model <|
+                \wallet oldState migrationState ->
+                    Model.OldState.update oldState result migrationState
+                        |> (\newState ->
+                                ( { model | modal = Just <| MigrationDetail newState }
+                                , case newState.currentStep of
+                                    Start ->
+                                        Cmd.none
+
+                                    Done ->
+                                        Cmd.none
+
+                                    ApprovingNovaTransition ->
+                                        Cmd.none
+
+                                    TransferingNova ->
+                                        Debug.todo "TransferingNova"
+
+                                    -- Ports.requestNovaTransfer wallet.address oldState.oldNova
+                                    EmergencyWithdrawal ->
+                                        Ports.requestEmergencyWithdrawal wallet.address
+
+                                    ClaimRewards ->
+                                        Debug.todo "claimRewards"
+
+                                    ApprovingDeposit ->
+                                        Ports.requestContractApproval
+                                            { from = Ports.LPToken
+                                            , to = Ports.MasterUniverse
+                                            , userAddress = wallet.address
+                                            , amount =
+                                                -- TODO check that this is proper
+                                                Model.Balance.toBigInt oldState.oldStaking
+                                            }
+
+                                    Deposing ->
+                                        Ports.sendDeposit <|
+                                            Json.Encode.object
+                                                [ ( "userAddress", Json.Encode.string wallet.address )
+                                                , ( "amount", Model.Balance.encode oldState.oldStaking )
+                                                ]
+                                )
+                           )
 
         UpdateStakingForm form ->
             updateWithWalletAndStakingModal model <|
@@ -188,11 +258,12 @@ update msg model =
             updateWithWalletAndStakingModal model <|
                 \wallet form ->
                     ( { model | modal = Just <| StakingDetail { form | request = Loading } }
-                    , Ports.askContractApproval <|
-                        Json.Encode.object
-                            [ ( "userAddress", Json.Encode.string wallet.address )
-                            , ( "amount", Utils.BigInt.encode form.amount )
-                            ]
+                    , Ports.requestContractApproval
+                        { from = Ports.LPToken
+                        , to = Ports.MasterUniverse
+                        , userAddress = wallet.address
+                        , amount = form.amount
+                        }
                     )
 
         ApprovalResponse response ->
@@ -358,6 +429,32 @@ updateWithWalletAndWithdrawModal model updater =
         |> Maybe.withDefault ( model, Cmd.none )
 
 
+updateWithWalletAndMigrationModal : Model -> (Wallet -> OldState -> MigrationState -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
+updateWithWalletAndMigrationModal model updater =
+    Maybe.map3
+        (\modal wallet oldState ->
+            case modal of
+                MoneyDetail ->
+                    ( model, Cmd.none )
+
+                FeeExplanation ->
+                    ( model, Cmd.none )
+
+                StakingDetail _ ->
+                    ( model, Cmd.none )
+
+                WithdrawDetail _ ->
+                    ( model, Cmd.none )
+
+                MigrationDetail migrationState ->
+                    updater wallet oldState migrationState
+        )
+        model.modal
+        (RemoteData.toMaybe model.wallet)
+        (RemoteData.toMaybe model.oldState)
+        |> Maybe.withDefault ( model, Cmd.none )
+
+
 subscriptions : Model -> Sub Msg
 subscriptions { wallet, modal, visibility } =
     Sub.batch
@@ -422,7 +519,7 @@ subscriptions { wallet, modal, visibility } =
                                     (\_ ->
                                         Sub.batch
                                             [ Ports.contractApprovalResponse
-                                                (Json.Decode.decodeValue Model.StakingInfo.decoderApproval
+                                                (Json.Decode.decodeValue Utils.Json.decoderOk
                                                     >> Result.mapError (\_ -> ())
                                                     >> ApprovalResponse
                                                 )
@@ -447,6 +544,10 @@ subscriptions { wallet, modal, visibility } =
                                     )
 
                         MigrationDetail _ ->
-                            Debug.todo "deal with this"
+                            Ports.contractApprovalResponse
+                                (Json.Decode.decodeValue Utils.Json.decoderOk
+                                    >> Result.mapError (\_ -> ())
+                                    >> UpdateMigration
+                                )
                 )
         ]

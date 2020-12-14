@@ -52,6 +52,12 @@ export const updateOldState = (app: any) => (payload: Result<OldState>) => {
   app.ports.updateOldState.send(payload)
 }
 
+export const updateEmergencyWithdrawal = (app: any) => (
+  payload: Result<any>
+) => {
+  app.ports.updateEmergencyWithdrawal.send(payload)
+}
+
 // from Elm -> TS
 export const connectMetamask = (app: any) => (
   onConnect: (withRequest: boolean) => void
@@ -78,7 +84,12 @@ export const poolReward = (app: any) => (
 }
 
 export const askContractApproval = (app: any) => (
-  onRequest: (request: { userAddress: string; amount: string }) => void
+  onRequest: (request: {
+    from: string;
+    to: string;
+    userAddress: string;
+    amount: string;
+  }) => void
 ) => {
   app.ports.askContractApproval.subscribe(onRequest)
 }
@@ -99,4 +110,9 @@ export const requestOldState = (app: any) => (
   onRequest: (userAddress: string) => void
 ) => {
   app.ports.requestOldState.subscribe(onRequest)
+}
+export const requestEmergencyWithdrawal = (app: any) => (
+  onRequest: (userAddress: string) => void
+) => {
+  app.ports.requestEmergencyWithdrawal.subscribe(onRequest)
 }

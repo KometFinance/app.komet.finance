@@ -15,7 +15,8 @@ export const setup = async () => {
     nova: process.env.NOVA,
     universe: process.env.MU,
     oldNova: process.env.NOVA1,
-    oldUniverse: process.env.MU1
+    oldUniverse: process.env.MU1,
+    migration: process.env.NOVA_MIG
   })
   console.log('addresses -> ', addresses)
 
