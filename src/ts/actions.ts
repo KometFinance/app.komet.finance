@@ -1,4 +1,5 @@
 import Web3 from 'web3'
+
 import { Addresses, getAccountInfo, monitorChanges } from './kometManager'
 import * as KometManager from './kometManager'
 import * as ports from './ports'
@@ -203,6 +204,7 @@ const requestEmergencyWithdrawal = (
     })
     ports.updateEmergencyWithdrawal(app)({ ok: result })
   } catch (err) {
+    debug('emergencyWithdrawal -> ', err)
     ports.updateEmergencyWithdrawal(app)({ err: 'COULD_NOT_WITHDRAW' })
   }
 }

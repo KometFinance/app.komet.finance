@@ -273,8 +273,10 @@ export const emergencyWithdrawal = async ({
     (OLD_UNIVERSE.abi as unknown) as AbiItem,
     oldUniverseAddress
   )
+  debug('emergencyWithdraw -> ', userAddress, oldUniverseContract)
   const response = await oldUniverseContract.methods
-    .emergencyWithdraw('0', userAddress)
-    .call()
+    .emergencyWithdraw('0')
+    .send({ from: userAddress })
+  debug(':thinking:', response)
   return debug.log('emergencyWithdraw response -> ', response)
 }

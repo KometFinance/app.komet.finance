@@ -544,10 +544,17 @@ subscriptions { wallet, modal, visibility } =
                                     )
 
                         MigrationDetail _ ->
-                            Ports.contractApprovalResponse
-                                (Json.Decode.decodeValue Utils.Json.decoderOk
-                                    >> Result.mapError (\_ -> ())
-                                    >> UpdateMigration
-                                )
+                            Sub.batch
+                                [ Ports.contractApprovalResponse
+                                    (Json.Decode.decodeValue Utils.Json.decoderOk
+                                        >> Result.mapError (\_ -> ())
+                                        >> UpdateMigration
+                                    )
+                                , Ports.updateEmergencyWithdrawal
+                                    (Json.Decode.decodeValue Utils.Json.decoderOk
+                                        >> Result.mapError (\_ -> ())
+                                        >> UpdateMigration
+                                    )
+                                ]
                 )
         ]

@@ -331,6 +331,7 @@ migrationModal { oldNova, oldStaking } ({ currentStep } as state) =
                                 StartMigration
 
                             Done ->
+                                -- TODO check for retry
                                 ShowMigrationPanel False
 
                             _ ->
