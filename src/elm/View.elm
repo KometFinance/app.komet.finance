@@ -7,6 +7,7 @@ import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
 import Model exposing (Images, Model, StakingFormStage(..))
 import Model.Balance exposing (Balance, humanReadableBalance)
+import Model.OldState exposing (MigrationStep(..))
 import Model.Wallet exposing (Wallet, WalletError(..))
 import RemoteData exposing (RemoteData(..))
 import Update exposing (Msg(..))
@@ -106,6 +107,12 @@ view ({ wallet, userStakingInfo, rewardInfo, images, modal } as model) =
                                                 , class "modal-backdrop fade show"
                                                 ]
                                                 []
+                                            ]
+
+                                    Model.MigrationDetail step ->
+                                        div []
+                                            [ migrationModal step
+                                            , div [ class "modal-backdrop fade show" ] []
                                             ]
                             )
                     , appFooter images
@@ -256,3 +263,8 @@ appFooter images =
                 ]
             ]
         ]
+
+
+migrationModal : MigrationStep -> Html Msg
+migrationModal step =
+    Debug.todo "do this"

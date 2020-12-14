@@ -12,7 +12,7 @@ import Json.Decode
 import Json.Encode
 import Maybe.Extra
 import Model exposing (AmountInputForm, Images, Modal(..), Model, StakingFormStage(..), WithdrawInputForm)
-import Model.OldState exposing (OldState)
+import Model.OldState exposing (MigrationStep, OldState)
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, WalletError)
 import Ports
@@ -36,6 +36,7 @@ type Msg
     | ShowMigrationPanel Bool
     | UpdateStakingForm AmountInputForm
     | UpdateWithdrawForm WithdrawInputForm
+    | UpdateMigration MigrationStep
     | AskContractApproval
     | ApprovalResponse (Result () ())
     | SendDeposit
@@ -152,10 +153,16 @@ update msg model =
             ( { model | modal = Nothing }, Cmd.none )
 
         ShowMigrationPanel True ->
-            Debug.todo ""
+            ( { model | modal = Just <| MigrationDetail Model.OldState.Start }, Cmd.none )
 
         ShowMigrationPanel False ->
             ( { model | modal = Nothing }, Cmd.none )
+
+        UpdateMigration step ->
+            ( { model | modal = Just <| MigrationDetail step }
+              -- TODO based on the step we'll want to trigger some automated commands here
+            , Cmd.none
+            )
 
         UpdateStakingForm form ->
             updateWithWalletAndStakingModal model <|
@@ -319,6 +326,9 @@ updateWithWalletAndStakingModal model updater =
 
                     WithdrawDetail _ ->
                         ( model, Cmd.none )
+
+                    MigrationDetail _ ->
+                        ( model, Cmd.none )
             )
 
 
@@ -338,6 +348,9 @@ updateWithWalletAndWithdrawModal model updater =
 
                 WithdrawDetail info ->
                     updater wallet info
+
+                MigrationDetail _ ->
+                    ( model, Cmd.none )
         )
         model.modal
         (RemoteData.toMaybe model.wallet)
@@ -432,5 +445,8 @@ subscriptions { wallet, modal, visibility } =
                                                 >> WithdrawResponse
                                             )
                                     )
+
+                        MigrationDetail _ ->
+                            Debug.todo "deal with this"
                 )
         ]

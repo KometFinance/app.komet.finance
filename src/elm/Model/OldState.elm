@@ -1,4 +1,9 @@
-module Model.OldState exposing (OldState, decoder, hasOldStuff)
+module Model.OldState exposing
+    ( MigrationStep(..)
+    , OldState
+    , decoder
+    , hasOldStuff
+    )
 
 import BigInt
 import Json.Decode exposing (Decoder)
@@ -28,3 +33,14 @@ decoder =
             |> required "oldNova" Model.Balance.decoder
             |> required "oldStaking" Model.Balance.decoder
         )
+
+
+type MigrationStep
+    = Start
+    | ApprovingNovaTransition (RemoteData () ())
+    | TransferingNovas (RemoteData () ())
+    | EmergencyWithdrawal (RemoteData () ())
+    | ClaimRewards (RemoteData () ())
+    | ApprovingDeposit (RemoteData () ())
+    | Deposing (RemoteData () ())
+    | Done
