@@ -96,6 +96,8 @@ const askContractApproval = (
     }
     const fromContractAddress = contractDecoder(addresses, from)
     const targetContractAddress = contractDecoder(addresses, to)
+    debug('from -> ', fromContractAddress)
+    debug('to -> ', targetContractAddress)
     const result = await KometManager.askContractApproval({
       web3,
       fromContractAddress,
@@ -103,8 +105,10 @@ const askContractApproval = (
       amount,
       userAddress
     })
+    debug('result -> ', result)
     ports.contractApprovalResponse(app)({ ok: result })
   } catch (err) {
+    debug('err -> ', err)
     ports.contractApprovalResponse(app)({ err: 'COULD_NOT_CONFIRM' })
   }
 }
@@ -209,6 +213,38 @@ const requestEmergencyWithdrawal = (
   }
 }
 
+const exchangeNovaV1 = (app: any, web3: Web3, addresses: Addresses) => async ({
+  userAddress,
+  amount
+}) => {
+  try {
+    const result = await KometManager.exchangeNovaV1({
+      web3,
+      migrationAddress: addresses.migration,
+      userAddress,
+      amount
+    })
+    ports.reportExchange(app)({ ok: result })
+  } catch (err) {
+    ports.reportExchange(app)({ err: 'COULD_NOT_EXCHANGE' })
+  }
+}
+
+const claimRewards = (app: any, web3: Web3, addresses: Addresses) => async (
+  userAddress
+) => {
+  try {
+    const result = await KometManager.claimRewards({
+      web3,
+      migrationAddress: addresses.migration,
+      userAddress
+    })
+    ports.reportClaimRewards(app)({ ok: result })
+  } catch (err) {
+    ports.reportClaimRewards(app)({ err: 'COULD_NOT_EXCHANGE' })
+  }
+}
+
 export const hook = (addresses: Addresses, web3: Web3, app: any) => {
   ports.connectMetamask(app)(connect(app, web3, addresses))
   ports.requestUserStakingInfo(app)(
@@ -225,6 +261,8 @@ export const hook = (addresses: Addresses, web3: Web3, app: any) => {
   ports.requestEmergencyWithdrawal(app)(
     requestEmergencyWithdrawal(app, web3, addresses)
   )
+  ports.exchangeNovaV1(app)(exchangeNovaV1(app, web3, addresses))
+  ports.claimRewards(app)(claimRewards(app, web3, addresses))
 
   // NOTE that should go in a better place but ...
   // let's listen to changes

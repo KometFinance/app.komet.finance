@@ -35,6 +35,7 @@ export const updateReward = (app: any) => (payload: Result<RewardData>) => {
 export const contractApprovalResponse = (app: any) => (
   payload: Result<Transaction>
 ) => {
+  debug(payload)
   app.ports.contractApprovalResponse.send(payload)
 }
 
@@ -55,7 +56,18 @@ export const updateOldState = (app: any) => (payload: Result<OldState>) => {
 export const updateEmergencyWithdrawal = (app: any) => (
   payload: Result<any>
 ) => {
+  debug(payload)
   app.ports.updateEmergencyWithdrawal.send(payload)
+}
+
+export const reportExchange = (app: any) => (payload: Result<any>) => {
+  debug(payload)
+  app.ports.reportExchange.send(payload)
+}
+
+export const reportClaimRewards = (app: any) => (payload: Result<any>) => {
+  debug(payload)
+  app.ports.reportClaimRewards.send(payload)
 }
 
 // from Elm -> TS
@@ -115,4 +127,16 @@ export const requestEmergencyWithdrawal = (app: any) => (
   onRequest: (userAddress: string) => void
 ) => {
   app.ports.requestEmergencyWithdrawal.subscribe(onRequest)
+}
+
+export const exchangeNovaV1 = (app: any) => (
+  onRequest: (request: { userAddress: string; amount: string }) => void
+) => {
+  app.ports.exchangeNovaV1.subscribe(onRequest)
+}
+
+export const claimRewards = (app: any) => (
+  onRequest: (userAddress: string) => void
+) => {
+  app.ports.claimRewards.subscribe(onRequest)
 }

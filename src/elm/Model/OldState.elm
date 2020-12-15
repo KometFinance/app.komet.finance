@@ -63,7 +63,7 @@ defaultMigrationState =
 
 update : OldState -> Result () () -> MigrationState -> MigrationState
 update { oldStaking } result model =
-    case ( model.currentStep, result ) of
+    case Debug.log "oldState update" ( model.currentStep, result ) of
         ( Start, _ ) ->
             model
 
@@ -127,7 +127,7 @@ update { oldStaking } result model =
         ( ClaimRewards, Ok () ) ->
             { model
                 | claimRewards = RemoteData.Success ()
-                , approvingNovaTransition = RemoteData.Loading
+                , approvingDeposit = RemoteData.Loading
                 , currentStep = ApprovingDeposit
             }
 

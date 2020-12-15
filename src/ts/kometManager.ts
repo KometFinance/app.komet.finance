@@ -3,6 +3,7 @@ import { AbiItem } from 'web3-utils'
 import ERC20ABI from '../../abis/ERC20.json'
 import UNIVERSE from '../../abis/MasterUniverse2.json'
 import OLD_UNIVERSE from '../../abis/MasterUniverse.json'
+import MIGRATION from '../../abis/NovaMigrationV2.json'
 import debug from './debug'
 
 const MAX_TIMEOUT = 30 * 1000 // 30 seconds
@@ -277,6 +278,49 @@ export const emergencyWithdrawal = async ({
   const response = await oldUniverseContract.methods
     .emergencyWithdraw('0')
     .send({ from: userAddress })
-  debug(':thinking:', response)
   return debug.log('emergencyWithdraw response -> ', response)
+}
+
+export type ExchangeNovaV1Arg = {
+  web3: Web3;
+  migrationAddress: string;
+  userAddress: string;
+  amount: string;
+};
+
+export const exchangeNovaV1 = async ({
+  web3,
+  migrationAddress,
+  userAddress,
+  amount
+}: ExchangeNovaV1Arg): Promise<any> => {
+  const migrationContract = new web3.eth.Contract(
+    (MIGRATION.abi as unknown) as AbiItem,
+    migrationAddress
+  )
+  const response = await migrationContract.methods
+    .swap(amount)
+    .send({ from: userAddress })
+  return debug.log('exchangeAnswer', response)
+}
+
+export type ClaimRewardsArg = {
+  web3: Web3;
+  migrationAddress: string;
+  userAddress: string;
+};
+
+export const claimRewards = async ({
+  web3,
+  migrationAddress,
+  userAddress
+}: ClaimRewardsArg): Promise<any> => {
+  const migrationContract = new web3.eth.Contract(
+    (MIGRATION.abi as unknown) as AbiItem,
+    migrationAddress
+  )
+  const response = await migrationContract.methods
+    .claimRewards()
+    .send({ from: userAddress })
+  return debug.log('claimRewards', response)
 }

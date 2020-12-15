@@ -1,9 +1,13 @@
 port module Ports exposing
     ( Contract(..)
+    , claimRewards
     , connectMetamask
     , contractApprovalResponse
     , depositResponse
+    , novaSwap
     , poolReward
+    , reportClaimRewards
+    , reportExchange
     , requestContractApproval
     , requestEmergencyWithdrawal
     , requestGeneralStakingInfo
@@ -23,6 +27,7 @@ port module Ports exposing
 import BigInt exposing (BigInt)
 import Json.Decode
 import Json.Encode
+import Model.Balance exposing (Balance)
 import Utils.BigInt
 
 
@@ -112,3 +117,24 @@ port requestEmergencyWithdrawal : String -> Cmd msg
 
 
 port updateEmergencyWithdrawal : (Json.Decode.Value -> msg) -> Sub msg
+
+
+novaSwap : String -> Balance -> Cmd msg
+novaSwap userAddress balance =
+    exchangeNovaV1 <|
+        Json.Encode.object
+            [ ( "userAddress", Json.Encode.string userAddress )
+            , ( "amount", Model.Balance.encode balance )
+            ]
+
+
+port exchangeNovaV1 : Json.Encode.Value -> Cmd msg
+
+
+port reportExchange : (Json.Decode.Value -> msg) -> Sub msg
+
+
+port claimRewards : String -> Cmd msg
+
+
+port reportClaimRewards : (Json.Decode.Value -> msg) -> Sub msg

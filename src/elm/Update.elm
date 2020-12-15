@@ -90,22 +90,42 @@ update msg model =
                     model.wallet
                         |> RemoteData.unwrap False
                             (.address >> (/=) (newWallet |> Result.Extra.unwrap "" .address))
-            in
-            ( { model
-                | wallet = RemoteData.fromResult newWallet
-                , userStakingInfo =
-                    if isNewAddress then
-                        Loading
 
-                    else
-                        model.userStakingInfo
-              }
+                newModel =
+                    { model
+                        | wallet = RemoteData.fromResult newWallet
+                        , userStakingInfo =
+                            if isNewAddress then
+                                Loading
+
+                            else
+                                model.userStakingInfo
+                        , oldState =
+                            if isNewAddress then
+                                Loading
+
+                            else
+                                model.oldState
+                    }
+            in
+            ( newModel
             , Result.Extra.unwrap Cmd.none
                 (\{ address } ->
                     Cmd.batch
                         [ Ports.requestUserStakingInfo address
-                        , Ports.requestOldState address
-                        , Ports.poolReward address
+                        , if RemoteData.isLoading newModel.oldState || RemoteData.isNotAsked newModel.oldState then
+                            Ports.requestOldState address
+
+                          else
+                            Cmd.none
+                        , if RemoteData.unwrap False Model.StakingInfo.isStaking newModel.userStakingInfo then
+                            Cmd.batch
+                                [ Ports.poolReward address
+                                , Ports.requestOldState address
+                                ]
+
+                          else
+                            Cmd.none
                         ]
                 )
                 newWallet
@@ -159,7 +179,13 @@ update msg model =
             ( { model | modal = Just <| MigrationDetail Model.OldState.defaultMigrationState }, Cmd.none )
 
         ShowMigrationPanel False ->
-            ( { model | modal = Nothing }, Cmd.none )
+            ( { model | modal = Nothing }
+            , model.wallet
+                |> RemoteData.unwrap Cmd.none
+                    (\wallet ->
+                        Ports.requestOldState wallet.address
+                    )
+            )
 
         StartMigration ->
             updateWithWalletAndMigrationModal model <|
@@ -206,14 +232,13 @@ update msg model =
                                         Cmd.none
 
                                     TransferingNova ->
-                                        Debug.todo "TransferingNova"
+                                        Ports.novaSwap wallet.address oldState.oldNova
 
-                                    -- Ports.requestNovaTransfer wallet.address oldState.oldNova
                                     EmergencyWithdrawal ->
                                         Ports.requestEmergencyWithdrawal wallet.address
 
                                     ClaimRewards ->
-                                        Debug.todo "claimRewards"
+                                        Ports.claimRewards wallet.address
 
                                     ApprovingDeposit ->
                                         Ports.requestContractApproval
@@ -555,6 +580,21 @@ subscriptions { wallet, modal, visibility } =
                                         >> Result.mapError (\_ -> ())
                                         >> UpdateMigration
                                     )
+                                , Ports.reportExchange
+                                    (Json.Decode.decodeValue Utils.Json.decoderOk
+                                        >> Result.mapError (\_ -> ())
+                                        >> UpdateMigration
+                                    )
+                                , Ports.reportClaimRewards
+                                    (Json.Decode.decodeValue Utils.Json.decoderOk
+                                        >> Result.mapError (\_ -> ())
+                                        >> UpdateMigration
+                                    )
+                                , Ports.depositResponse
+                                    (Json.Decode.decodeValue Utils.Json.decoderOk
+                                        >> Result.mapError (\_ -> ())
+                                        >> UpdateMigration
+                                      )
                                 ]
                 )
         ]
