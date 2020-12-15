@@ -63,7 +63,7 @@ defaultMigrationState =
 
 update : OldState -> Result () () -> MigrationState -> MigrationState
 update { oldStaking } result model =
-    case Debug.log "oldState update" ( model.currentStep, result ) of
+    case ( model.currentStep, result ) of
         ( Start, _ ) ->
             model
 
