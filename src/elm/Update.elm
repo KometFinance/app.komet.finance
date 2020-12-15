@@ -1,4 +1,4 @@
-port module Update exposing
+module Update exposing
     ( Flags
     , Msg(..)
     , init
@@ -12,12 +12,16 @@ import Json.Decode
 import Json.Encode
 import Maybe.Extra
 import Model exposing (AmountInputForm, Images, Modal(..), Model, StakingFormStage(..), WithdrawInputForm)
+import Model.Balance
+import Model.OldState exposing (MigrationState, MigrationStep(..), OldState)
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, WalletError)
+import Ports
 import RemoteData exposing (RemoteData(..))
 import Result.Extra
 import Time
 import Utils.BigInt
+import Utils.Json
 
 
 type Msg
@@ -27,11 +31,15 @@ type Msg
     | UpdateUserStakingInfo (Result StakingInfoError UserStakingInfo)
     | UpdateGeneralStakingInfo (Result StakingInfoError GeneralStakingInfo)
     | UpdateReward (Result StakingInfoError RewardInfo)
+    | UpdateOldState (Result () OldState)
     | ShowStakingForm Bool
     | ShowFeeExplanation Bool
     | ShowWithdrawConfirmation Bool
+    | ShowMigrationPanel Bool
+    | StartMigration
     | UpdateStakingForm AmountInputForm
     | UpdateWithdrawForm WithdrawInputForm
+    | UpdateMigration (Result () ())
     | AskContractApproval
     | ApprovalResponse (Result () ())
     | SendDeposit
@@ -40,48 +48,6 @@ type Msg
     | WithdrawResponse (Result () ())
     | RefreshInfo
     | VisibityChange Visibility
-
-
-port connectMetamask : Bool -> Cmd msg
-
-
-port updateWallet : (Json.Decode.Value -> msg) -> Sub msg
-
-
-port requestUserStakingInfo : String -> Cmd msg
-
-
-port updateUserStakingInfo : (Json.Decode.Value -> msg) -> Sub msg
-
-
-port requestGeneralStakingInfo : () -> Cmd msg
-
-
-port updateGeneralStakingInfo : (Json.Decode.Value -> msg) -> Sub msg
-
-
-port askContractApproval : Json.Encode.Value -> Cmd msg
-
-
-port contractApprovalResponse : (Json.Encode.Value -> msg) -> Sub msg
-
-
-port sendDeposit : Json.Encode.Value -> Cmd msg
-
-
-port depositResponse : (Json.Encode.Value -> msg) -> Sub msg
-
-
-port withdraw : Json.Encode.Value -> Cmd msg
-
-
-port withdrawResponse : (Json.Encode.Value -> msg) -> Sub msg
-
-
-port updateReward : (Json.Decode.Value -> msg) -> Sub msg
-
-
-port poolReward : String -> Cmd msg
 
 
 type alias Flags =
@@ -96,11 +62,12 @@ init images =
       , userStakingInfo = NotAsked
       , generalStakingInfo = Loading
       , rewardInfo = NotAsked
+      , oldState = NotAsked
       , visibility = Browser.Events.Visible
       }
     , Cmd.batch
-        [ connectMetamask False
-        , requestGeneralStakingInfo ()
+        [ Ports.connectMetamask False
+        , Ports.requestGeneralStakingInfo ()
         ]
     )
 
@@ -115,7 +82,7 @@ update msg model =
             ( { model | visibility = visibility }, Cmd.none )
 
         Connect ->
-            ( { model | wallet = Loading }, connectMetamask True )
+            ( { model | wallet = Loading }, Ports.connectMetamask True )
 
         UpdateWallet newWallet ->
             let
@@ -123,21 +90,42 @@ update msg model =
                     model.wallet
                         |> RemoteData.unwrap False
                             (.address >> (/=) (newWallet |> Result.Extra.unwrap "" .address))
-            in
-            ( { model
-                | wallet = RemoteData.fromResult newWallet
-                , userStakingInfo =
-                    if isNewAddress then
-                        Loading
 
-                    else
-                        model.userStakingInfo
-              }
+                newModel =
+                    { model
+                        | wallet = RemoteData.fromResult newWallet
+                        , userStakingInfo =
+                            if isNewAddress then
+                                Loading
+
+                            else
+                                model.userStakingInfo
+                        , oldState =
+                            if isNewAddress then
+                                Loading
+
+                            else
+                                model.oldState
+                    }
+            in
+            ( newModel
             , Result.Extra.unwrap Cmd.none
                 (\{ address } ->
                     Cmd.batch
-                        [ requestUserStakingInfo address
-                        , poolReward address
+                        [ Ports.requestUserStakingInfo address
+                        , if RemoteData.isLoading newModel.oldState || RemoteData.isNotAsked newModel.oldState then
+                            Ports.requestOldState address
+
+                          else
+                            Cmd.none
+                        , if RemoteData.unwrap False Model.StakingInfo.isStaking newModel.userStakingInfo then
+                            Cmd.batch
+                                [ Ports.poolReward address
+                                , Ports.requestOldState address
+                                ]
+
+                          else
+                            Cmd.none
                         ]
                 )
                 newWallet
@@ -165,7 +153,7 @@ update msg model =
                 |> RemoteData.unwrap Cmd.none
                     (\wallet ->
                         if isCurrentlyStaking then
-                            poolReward wallet.address
+                            Ports.poolReward wallet.address
 
                         else
                             Cmd.none
@@ -186,6 +174,90 @@ update msg model =
 
         ShowFeeExplanation False ->
             ( { model | modal = Nothing }, Cmd.none )
+
+        ShowMigrationPanel True ->
+            ( { model | modal = Just <| MigrationDetail Model.OldState.defaultMigrationState }, Cmd.none )
+
+        ShowMigrationPanel False ->
+            ( { model | modal = Nothing }
+            , model.wallet
+                |> RemoteData.unwrap Cmd.none
+                    (\wallet ->
+                        Ports.requestOldState wallet.address
+                    )
+            )
+
+        StartMigration ->
+            updateWithWalletAndMigrationModal model <|
+                \wallet oldState migrationState ->
+                    let
+                        ( nextState, cmd ) =
+                            if Model.Balance.isPositive oldState.oldNova then
+                                ( { migrationState
+                                    | approvingNovaTransition = Loading
+                                    , currentStep = ApprovingNovaTransition
+                                  }
+                                , Ports.requestContractApproval
+                                    { from = Ports.OldNova
+                                    , to = Ports.NovaMigration
+                                    , userAddress = wallet.address
+                                    , amount = Model.Balance.toBigInt oldState.oldNova
+                                    }
+                                )
+
+                            else
+                                ( { migrationState
+                                    | withdrawal = Loading
+                                    , currentStep = EmergencyWithdrawal
+                                  }
+                                , Ports.requestEmergencyWithdrawal wallet.address
+                                )
+                    in
+                    ( { model | modal = Just <| MigrationDetail nextState }, cmd )
+
+        UpdateMigration result ->
+            updateWithWalletAndMigrationModal model <|
+                \wallet oldState migrationState ->
+                    Model.OldState.update oldState result migrationState
+                        |> (\newState ->
+                                ( { model | modal = Just <| MigrationDetail newState }
+                                , case newState.currentStep of
+                                    Start ->
+                                        Cmd.none
+
+                                    Done ->
+                                        Cmd.none
+
+                                    ApprovingNovaTransition ->
+                                        Cmd.none
+
+                                    TransferingNova ->
+                                        Ports.novaSwap wallet.address oldState.oldNova
+
+                                    EmergencyWithdrawal ->
+                                        Ports.requestEmergencyWithdrawal wallet.address
+
+                                    ClaimRewards ->
+                                        Ports.claimRewards wallet.address
+
+                                    ApprovingDeposit ->
+                                        Ports.requestContractApproval
+                                            { from = Ports.LPToken
+                                            , to = Ports.MasterUniverse
+                                            , userAddress = wallet.address
+                                            , amount =
+                                                -- TODO check that this is proper
+                                                Model.Balance.toBigInt oldState.oldStaking
+                                            }
+
+                                    Deposing ->
+                                        Ports.sendDeposit <|
+                                            Json.Encode.object
+                                                [ ( "userAddress", Json.Encode.string wallet.address )
+                                                , ( "amount", Model.Balance.encode oldState.oldStaking )
+                                                ]
+                                )
+                           )
 
         UpdateStakingForm form ->
             updateWithWalletAndStakingModal model <|
@@ -211,11 +283,12 @@ update msg model =
             updateWithWalletAndStakingModal model <|
                 \wallet form ->
                     ( { model | modal = Just <| StakingDetail { form | request = Loading } }
-                    , askContractApproval <|
-                        Json.Encode.object
-                            [ ( "userAddress", Json.Encode.string wallet.address )
-                            , ( "amount", Utils.BigInt.encode form.amount )
-                            ]
+                    , Ports.requestContractApproval
+                        { from = Ports.LPToken
+                        , to = Ports.MasterUniverse
+                        , userAddress = wallet.address
+                        , amount = form.amount
+                        }
                     )
 
         ApprovalResponse response ->
@@ -244,7 +317,7 @@ update msg model =
                         | modal =
                             Just <| StakingDetail { form | request = Loading }
                       }
-                    , sendDeposit <|
+                    , Ports.sendDeposit <|
                         Json.Encode.object
                             [ ( "userAddress", Json.Encode.string wallet.address )
                             , ( "amount", Json.Encode.string <| BigInt.toString form.amount )
@@ -256,8 +329,8 @@ update msg model =
                 \_ _ ->
                     ( { model | modal = Nothing }
                     , Cmd.batch
-                        [ connectMetamask False
-                        , requestGeneralStakingInfo ()
+                        [ Ports.connectMetamask False
+                        , Ports.requestGeneralStakingInfo ()
                         ]
                     )
 
@@ -265,7 +338,7 @@ update msg model =
             updateWithWalletAndStakingModal model <|
                 \_ form ->
                     ( { model | modal = Just <| StakingDetail { form | request = RemoteData.Failure () } }
-                    , connectMetamask False
+                    , Ports.connectMetamask False
                     )
 
         ShowWithdrawConfirmation False ->
@@ -289,7 +362,7 @@ update msg model =
                                         | request = Loading
                                     }
                       }
-                    , withdraw <|
+                    , Ports.withdraw <|
                         Json.Encode.object
                             [ ( "amount", Utils.BigInt.encode form.amount )
                             , ( "userAddress", Json.Encode.string wallet.address )
@@ -298,7 +371,7 @@ update msg model =
                 )
 
         WithdrawResponse (Ok ()) ->
-            ( { model | modal = Nothing }, connectMetamask False )
+            ( { model | modal = Nothing }, Ports.connectMetamask False )
 
         WithdrawResponse (Err ()) ->
             updateWithWalletAndWithdrawModal model
@@ -312,19 +385,22 @@ update msg model =
                     (\wallet ->
                         ( model
                         , Cmd.batch
-                            [ connectMetamask False
+                            [ Ports.connectMetamask False
                             , if RemoteData.unwrap False isStaking model.userStakingInfo then
-                                poolReward wallet.address
+                                Ports.poolReward wallet.address
 
                               else
                                 Cmd.none
-                            , requestGeneralStakingInfo ()
+                            , Ports.requestGeneralStakingInfo ()
                             ]
                         )
                     )
 
         UpdateReward newReward ->
             ( { model | rewardInfo = RemoteData.fromResult newReward }, Cmd.none )
+
+        UpdateOldState oldState ->
+            ( { model | oldState = RemoteData.fromResult oldState }, Cmd.none )
 
 
 updateWithWalletAndStakingModal : Model -> (Wallet -> AmountInputForm -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
@@ -346,6 +422,9 @@ updateWithWalletAndStakingModal model updater =
 
                     WithdrawDetail _ ->
                         ( model, Cmd.none )
+
+                    MigrationDetail _ ->
+                        ( model, Cmd.none )
             )
 
 
@@ -365,6 +444,9 @@ updateWithWalletAndWithdrawModal model updater =
 
                 WithdrawDetail info ->
                     updater wallet info
+
+                MigrationDetail _ ->
+                    ( model, Cmd.none )
         )
         model.modal
         (RemoteData.toMaybe model.wallet)
@@ -372,11 +454,37 @@ updateWithWalletAndWithdrawModal model updater =
         |> Maybe.withDefault ( model, Cmd.none )
 
 
+updateWithWalletAndMigrationModal : Model -> (Wallet -> OldState -> MigrationState -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
+updateWithWalletAndMigrationModal model updater =
+    Maybe.map3
+        (\modal wallet oldState ->
+            case modal of
+                MoneyDetail ->
+                    ( model, Cmd.none )
+
+                FeeExplanation ->
+                    ( model, Cmd.none )
+
+                StakingDetail _ ->
+                    ( model, Cmd.none )
+
+                WithdrawDetail _ ->
+                    ( model, Cmd.none )
+
+                MigrationDetail migrationState ->
+                    updater wallet oldState migrationState
+        )
+        model.modal
+        (RemoteData.toMaybe model.wallet)
+        (RemoteData.toMaybe model.oldState)
+        |> Maybe.withDefault ( model, Cmd.none )
+
+
 subscriptions : Model -> Sub Msg
 subscriptions { wallet, modal, visibility } =
     Sub.batch
         [ Browser.Events.onVisibilityChange VisibityChange
-        , updateWallet
+        , Ports.updateWallet
             (Json.Decode.decodeValue Model.Wallet.decoder
                 >> Result.mapError Model.Wallet.WrongJson
                 >> Result.andThen identity
@@ -386,20 +494,25 @@ subscriptions { wallet, modal, visibility } =
             |> RemoteData.unwrap Sub.none
                 (\_ ->
                     Sub.batch
-                        [ updateUserStakingInfo
+                        [ Ports.updateUserStakingInfo
                             (Json.Decode.decodeValue Model.StakingInfo.decoderUserInfo
                                 >> Result.mapError Model.StakingInfo.WrongJson
                                 >> UpdateUserStakingInfo
                             )
-                        , withdrawResponse
+                        , Ports.withdrawResponse
                             (Json.Decode.decodeValue Model.StakingInfo.decoderWithdraw
                                 >> Result.mapError (\_ -> ())
                                 >> WithdrawResponse
                             )
-                        , updateReward
+                        , Ports.updateReward
                             (Json.Decode.decodeValue Model.StakingInfo.decoderReward
                                 >> Result.mapError Model.StakingInfo.WrongJson
                                 >> UpdateReward
+                            )
+                        , Ports.updateOldState
+                            (Json.Decode.decodeValue Model.OldState.decoder
+                                >> Result.mapError (\_ -> ())
+                                >> UpdateOldState
                             )
                         , if visibility == Browser.Events.Visible then
                             Time.every 30000
@@ -409,7 +522,7 @@ subscriptions { wallet, modal, visibility } =
                             Sub.none
                         ]
                 )
-        , updateGeneralStakingInfo
+        , Ports.updateGeneralStakingInfo
             (Json.Decode.decodeValue Model.StakingInfo.decoderGeneralInfo
                 >> Result.mapError Model.StakingInfo.WrongJson
                 >> UpdateGeneralStakingInfo
@@ -430,12 +543,12 @@ subscriptions { wallet, modal, visibility } =
                                     Sub.none
                                     (\_ ->
                                         Sub.batch
-                                            [ contractApprovalResponse
-                                                (Json.Decode.decodeValue Model.StakingInfo.decoderApproval
+                                            [ Ports.contractApprovalResponse
+                                                (Json.Decode.decodeValue Utils.Json.decoderOk
                                                     >> Result.mapError (\_ -> ())
                                                     >> ApprovalResponse
                                                 )
-                                            , depositResponse
+                                            , Ports.depositResponse
                                                 (Json.Decode.decodeValue Model.StakingInfo.decoderDeposit
                                                     >> Result.mapError (\_ -> ())
                                                     >> DepositResponse
@@ -447,12 +560,41 @@ subscriptions { wallet, modal, visibility } =
                             wallet
                                 |> RemoteData.unwrap Sub.none
                                     (\_ ->
-                                        withdrawResponse
+                                        Ports.withdrawResponse
                                             (Json.Decode.decodeValue
                                                 Model.StakingInfo.decoderWithdraw
                                                 >> Result.mapError (\_ -> ())
                                                 >> WithdrawResponse
                                             )
                                     )
+
+                        MigrationDetail _ ->
+                            Sub.batch
+                                [ Ports.contractApprovalResponse
+                                    (Json.Decode.decodeValue Utils.Json.decoderOk
+                                        >> Result.mapError (\_ -> ())
+                                        >> UpdateMigration
+                                    )
+                                , Ports.updateEmergencyWithdrawal
+                                    (Json.Decode.decodeValue Utils.Json.decoderOk
+                                        >> Result.mapError (\_ -> ())
+                                        >> UpdateMigration
+                                    )
+                                , Ports.reportExchange
+                                    (Json.Decode.decodeValue Utils.Json.decoderOk
+                                        >> Result.mapError (\_ -> ())
+                                        >> UpdateMigration
+                                    )
+                                , Ports.reportClaimRewards
+                                    (Json.Decode.decodeValue Utils.Json.decoderOk
+                                        >> Result.mapError (\_ -> ())
+                                        >> UpdateMigration
+                                    )
+                                , Ports.depositResponse
+                                    (Json.Decode.decodeValue Utils.Json.decoderOk
+                                        >> Result.mapError (\_ -> ())
+                                        >> UpdateMigration
+                                      )
+                                ]
                 )
         ]

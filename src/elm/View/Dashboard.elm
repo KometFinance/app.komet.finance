@@ -1,11 +1,12 @@
 module View.Dashboard exposing (dashboard)
 
-import Html exposing (Html, a, br, button, div, h3, h4, h6, hr, img, li, node, p, small, span, text, ul)
+import Html exposing (Html, a, button, div, h3, h4, h5, h6, hr, img, li, node, p, small, span, text, ul)
 import Html.Attributes exposing (attribute, class, disabled, href, id, src, target, type_)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
 import Model exposing (Images, Model)
 import Model.Balance exposing (split)
+import Model.OldState
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, canStake)
 import RemoteData exposing (RemoteData(..))
@@ -17,10 +18,17 @@ import View.Commons exposing (defaultError, defaultLoader)
 
 
 dashboard : Model -> Html Msg
-dashboard { images, wallet, userStakingInfo, rewardInfo, generalStakingInfo } =
+dashboard { images, wallet, userStakingInfo, rewardInfo, generalStakingInfo, oldState } =
     div [ class "w-full row" ]
         [ div [ class "col-12 col-md-12 col-lg-10 mx-lg-auto" ]
-            [ div [ class "row" ]
+            [ Html.Extra.viewIf (Model.OldState.hasOldStuff oldState) <|
+                div [ class "mt-16 alert alert-info d-flex align-items-center justify-content-start", attribute "role" "alert" ]
+                    [ h5 [ class "mb-0 mr-3 alert-heading" ]
+                        [ text "V2 is Here!" ]
+                    , button [ class "ml-auto btn btn-info", onClick <| ShowMigrationPanel True ]
+                        [ text "Switch from V1 now" ]
+                    ]
+            , div [ class "row" ]
                 [ div [ class "col-12" ]
                     [ wallet |> RemoteData.toMaybe |> viewMaybe (generalInfoAndCTA images)
                     ]

@@ -2,6 +2,9 @@ import Web3 from 'web3'
 import { AbiItem } from 'web3-utils'
 import ERC20ABI from '../../abis/ERC20.json'
 import UNIVERSE from '../../abis/MasterUniverse2.json'
+import OLD_UNIVERSE from '../../abis/MasterUniverse.json'
+import MIGRATION from '../../abis/NovaMigrationV2.json'
+import debug from './debug'
 
 const MAX_TIMEOUT = 30 * 1000 // 30 seconds
 
@@ -34,6 +37,9 @@ export type Addresses = {
   lp: string;
   nova: string;
   universe: string;
+  oldNova: string;
+  oldUniverse: string;
+  migration: string;
 };
 
 export type AccountInfo = {
@@ -155,8 +161,8 @@ export const requestGeneralStakingInfo = async (
 
 export type ContractApprovalArg = {
   web3: Web3;
-  universeAddress: string;
-  lpAddress: string;
+  fromContractAddress: string;
+  targetContractAddress: string;
   userAddress: string;
   amount: string;
 };
@@ -167,14 +173,14 @@ export type Transaction = {
 
 export const askContractApproval = async ({
   web3,
-  lpAddress,
-  universeAddress,
+  fromContractAddress,
+  targetContractAddress,
   userAddress,
   amount
 }: ContractApprovalArg): Promise<Transaction> => {
-  const lpContract = getERC20Contract(web3, lpAddress)
-  return await lpContract.methods
-    .approve(universeAddress, amount)
+  const fromContract = getERC20Contract(web3, fromContractAddress)
+  return await fromContract.methods
+    .approve(targetContractAddress, amount)
     .send({ from: userAddress })
 }
 
@@ -220,4 +226,101 @@ export const withdraw = async ({
   return await universeContract.methods
     .withdraw('0', amount)
     .send({ from: userAddress })
+}
+
+export type OldStateArg = {
+  web3: Web3;
+  oldUniverseAddress: string;
+  oldNovaAddress: string;
+  userAddress: string;
+};
+export type OldState = {
+  oldStaking: string;
+  oldNova: string;
+};
+
+export const requestOldState = async ({
+  web3,
+  oldUniverseAddress,
+  oldNovaAddress,
+  userAddress
+}: OldStateArg): Promise<OldState> => {
+  const oldUniverseContract = new web3.eth.Contract(
+    (OLD_UNIVERSE.abi as unknown) as AbiItem,
+    oldUniverseAddress
+  )
+  const { amount } = await oldUniverseContract.methods
+    .userInfo('0', userAddress)
+    .call()
+  const oldNova = await getBalance(web3, oldNovaAddress, userAddress)
+  return debug.log('requestOldState response -> ', {
+    oldStaking: amount,
+    oldNova
+  })
+}
+
+export type EmergencyWithdrawalArg = {
+  web3: Web3;
+  oldUniverseAddress: string;
+  userAddress: string;
+};
+
+export const emergencyWithdrawal = async ({
+  web3,
+  oldUniverseAddress,
+  userAddress
+}: EmergencyWithdrawalArg): Promise<any> => {
+  const oldUniverseContract = new web3.eth.Contract(
+    (OLD_UNIVERSE.abi as unknown) as AbiItem,
+    oldUniverseAddress
+  )
+  debug('emergencyWithdraw -> ', userAddress, oldUniverseContract)
+  const response = await oldUniverseContract.methods
+    .emergencyWithdraw('0')
+    .send({ from: userAddress })
+  return debug.log('emergencyWithdraw response -> ', response)
+}
+
+export type ExchangeNovaV1Arg = {
+  web3: Web3;
+  migrationAddress: string;
+  userAddress: string;
+  amount: string;
+};
+
+export const exchangeNovaV1 = async ({
+  web3,
+  migrationAddress,
+  userAddress,
+  amount
+}: ExchangeNovaV1Arg): Promise<any> => {
+  const migrationContract = new web3.eth.Contract(
+    (MIGRATION.abi as unknown) as AbiItem,
+    migrationAddress
+  )
+  const response = await migrationContract.methods
+    .swap(amount)
+    .send({ from: userAddress })
+  return debug.log('exchangeAnswer', response)
+}
+
+export type ClaimRewardsArg = {
+  web3: Web3;
+  migrationAddress: string;
+  userAddress: string;
+};
+
+export const claimRewards = async ({
+  web3,
+  migrationAddress,
+  userAddress
+}: ClaimRewardsArg): Promise<any> => {
+  const migrationContract = new web3.eth.Contract(
+    (MIGRATION.abi as unknown) as AbiItem,
+    migrationAddress
+  )
+  const response = await migrationContract.methods
+    .claimRewards()
+    .send({ from: userAddress })
+  return debug.log('claimRewards', response)
 }

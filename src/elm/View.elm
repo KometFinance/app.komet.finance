@@ -1,12 +1,13 @@
 module View exposing (view)
 
 import Browser exposing (Document)
-import Html exposing (Html, a, br, button, div, footer, img, li, nav, p, small, span, text, ul)
-import Html.Attributes exposing (alt, attribute, class, href, id, src, style, target, type_, width)
+import Html exposing (Html, a, br, button, div, footer, h1, h3, h4, i, img, li, nav, p, small, span, text, ul)
+import Html.Attributes exposing (alt, attribute, class, disabled, href, id, src, style, target, type_, width)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
 import Model exposing (Images, Model, StakingFormStage(..))
 import Model.Balance exposing (Balance, humanReadableBalance)
+import Model.OldState exposing (MigrationState, MigrationStep(..), OldState)
 import Model.Wallet exposing (Wallet, WalletError(..))
 import RemoteData exposing (RemoteData(..))
 import Update exposing (Msg(..))
@@ -16,7 +17,7 @@ import View.Dashboard exposing (dashboard)
 
 
 view : Model -> Document Msg
-view ({ wallet, userStakingInfo, rewardInfo, images, modal } as model) =
+view ({ wallet, oldState, userStakingInfo, rewardInfo, images, modal } as model) =
     { title = "KOMET"
     , body =
         [ div [ class "overflow-hidden light_1", style "top" "300px" ] []
@@ -107,6 +108,16 @@ view ({ wallet, userStakingInfo, rewardInfo, images, modal } as model) =
                                                 ]
                                                 []
                                             ]
+
+                                    Model.MigrationDetail state ->
+                                        oldState
+                                            |> RemoteData.unwrap Html.Extra.nothing
+                                                (\oldStuff ->
+                                                    div []
+                                                        [ migrationModal oldStuff state
+                                                        , div [ class "modal-backdrop fade show" ] []
+                                                        ]
+                                                )
                             )
                     , appFooter images
                     ]
@@ -254,5 +265,116 @@ appFooter images =
                         ]
                     ]
                 ]
+            ]
+        ]
+
+
+migrationModal : OldState -> MigrationState -> Html Msg
+migrationModal { oldNova, oldStaking } ({ currentStep } as state) =
+    modal
+        { onClose = Nothing
+
+        --  TODO calculate the progress nicely based on what's required
+        , progress = 0
+        , content =
+            let
+                isRunning =
+                    case currentStep of
+                        Start ->
+                            False
+
+                        Done ->
+                            False
+
+                        _ ->
+                            True
+            in
+            div [ class "p-5 card-body" ]
+                [ h3 [ class "text-center card-title" ]
+                    [ text "Migration to NOVA V2"
+                    ]
+
+                -- , h4 [ class "mt-4 mb-2 text-center gradient_lp display-3" ] [ text  ]
+                , p [ class "mb-5 text-muted" ]
+                    [ small [] [ text "This helper will run all the required steps to migrate your old assets to the new eco system" ] ]
+                , div [ class "flex flex-col mt-8 mb-12" ]
+                    [ h1 [ class "pl-4 text-xl text-left" ] [ text "Steps to migrate" ]
+                    , div [ class "p-4 text-left card text-muted space-y-2" ]
+                        [ Html.Extra.viewIf (Model.Balance.isPositive oldNova) <|
+                            div [ class "flex flex-col space-y-2" ] <|
+                                h4 [ class "pt-2 pb-0 mb-0 text-lg text-muted" ]
+                                    [ text <| "Migrating " ++ Model.Balance.humanReadableBalance 2 oldNova ++ " NOVA V1 to "
+                                    , span [ class "text-secondary" ] [ text <| Model.Balance.humanReadableBalance 2 oldNova ]
+                                    , text " NOVA V2"
+                                    ]
+                                    :: List.map viewStep
+                                        [ ( "requiring permission to transfer the NOVA V1", state.approvingNovaTransition )
+                                        , ( "exchanging NOVA V1 with NOVA V2", state.transferingNova )
+                                        ]
+                        , Html.Extra.viewIf (Model.Balance.isPositive oldStaking) <|
+                            div [ class "flex flex-col space-y-2" ] <|
+                                h4 [ class "pt-2 pb-0 mb-0 text-lg text-muted" ]
+                                    [ text "Migrating V1 staking to V2 stating" ]
+                                    :: List.map viewStep
+                                        [ ( "withdrawing LP token from Master Universe V1", state.withdrawal )
+                                        , ( "claiming Rewards from the migration contract", state.claimRewards )
+                                        , ( "depositing on Master Universe V2", state.approvingDeposit |> RemoteData.andThen (\_ -> state.deposit) )
+                                        ]
+                        ]
+                    ]
+                , button
+                    [ class "flex flex-row items-center justify-center mb-0 space-x-8 btn btn-block btn-primary btn-lg"
+                    , disabled isRunning
+                    , onClick <|
+                        case currentStep of
+                            Start ->
+                                StartMigration
+
+                            Done ->
+                                -- TODO check for retry
+                                ShowMigrationPanel False
+
+                            _ ->
+                                NoOp
+                    ]
+                  <|
+                    case currentStep of
+                        Start ->
+                            [ text "Start" ]
+
+                        Done ->
+                            [ text "Done" ]
+
+                        _ ->
+                            [ span [ class "spinner-border" ] []
+                            , span [] [ text "Migrating..." ]
+                            ]
+                ]
+        }
+
+
+viewStep : ( String, RemoteData () () ) -> Html Msg
+viewStep ( name, state ) =
+    div [ class "flex flex-row items-center h-8 space-x-4" ]
+        [ case state of
+            NotAsked ->
+                span [ class "w-4 text-secondary" ] [ i [ class "bi bi-check2" ] [] ]
+
+            Loading ->
+                span [ class "w-4 text-primary" ] [ span [ class "spinner-border spinner-border-sm" ] [] ]
+
+            Failure () ->
+                span [ class "w-4 text-danger" ] [ i [ class "bi bi-exclamation-circle" ] [] ]
+
+            Success () ->
+                span [ class "w-4 text-primary" ] [ i [ class "bi bi-check2-circle" ] [] ]
+        , span
+            [ if RemoteData.isLoading state then
+                class "text-secondary"
+
+              else
+                class "text-muted"
+            ]
+            [ text name
             ]
         ]

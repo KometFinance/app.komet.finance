@@ -5,14 +5,18 @@ import * as actions from './actions'
 import { provider } from 'web3-core'
 import detectEthereumProvider from '@metamask/detect-provider'
 import Web3 from 'web3'
+import { Addresses } from './kometManager'
 
 export const setup = async () => {
   // get the addresses
-  const addresses = debug.log('addresses? ', {
+  const addresses: Addresses = debug.log('addresses? ', {
     komet: process.env.KOMET,
     lp: process.env.LP,
     nova: process.env.NOVA,
-    universe: process.env.MU
+    universe: process.env.MU,
+    oldNova: process.env.NOVA1,
+    oldUniverse: process.env.MU1,
+    migration: process.env.NOVA_MIG
   })
   console.log('addresses -> ', addresses)
 
