@@ -35,6 +35,7 @@ type Msg
     | ShowStakingForm Bool
     | ShowFeeExplanation Bool
     | ShowWithdrawConfirmation Bool
+    | ShowClaimConfirmation Bool
     | ShowMigrationPanel Bool
     | StartMigration
     | UpdateStakingForm AmountInputForm
@@ -45,6 +46,8 @@ type Msg
     | SendDeposit
     | DepositResponse (Result () ())
     | Withdraw
+    | ClaimResponse (Result () ())
+    | RewardClaim
     | WithdrawResponse (Result () ())
     | RefreshInfo
     | VisibityChange Visibility
@@ -169,6 +172,39 @@ update msg model =
         ShowStakingForm True ->
             ( { model | modal = Just <| StakingDetail Model.defaultAmountInputForm }, Cmd.none )
 
+        ShowClaimConfirmation True ->
+            ( { model | modal = Just <| ConfirmRewardClaim NotAsked }, Cmd.none )
+
+        ShowClaimConfirmation False ->
+            ( { model | modal = Nothing }, Cmd.none )
+
+        RewardClaim ->
+            updateWithWalletAndClaimModal model
+                (\wallet _ ->
+                    ( { model
+                        | modal =
+                            Just <| ConfirmRewardClaim Loading
+                      }
+                    , Ports.withdraw <|
+                        Json.Encode.object
+                            [ ( "amount", Utils.BigInt.encode <| BigInt.fromInt 0 )
+                            , ( "userAddress", Json.Encode.string wallet.address )
+                            ]
+                    )
+                )
+
+        ClaimResponse request ->
+            ( { model
+                | modal =
+                    if model.modal == (Just <| ConfirmRewardClaim Loading) then
+                        Just <| ConfirmRewardClaim <| RemoteData.fromResult request
+
+                    else
+                        model.modal
+              }
+            , Cmd.none
+            )
+
         ShowFeeExplanation True ->
             ( { model | modal = Just FeeExplanation }, Cmd.none )
 
@@ -246,7 +282,6 @@ update msg model =
                                             , to = Ports.MasterUniverse
                                             , userAddress = wallet.address
                                             , amount =
-                                                -- TODO check that this is proper
                                                 Model.Balance.toBigInt oldState.oldStaking
                                             }
 
@@ -420,12 +455,44 @@ updateWithWalletAndStakingModal model updater =
                     StakingDetail form ->
                         updater wallet form
 
+                    ConfirmRewardClaim _ ->
+                        ( model, Cmd.none )
+
                     WithdrawDetail _ ->
                         ( model, Cmd.none )
 
                     MigrationDetail _ ->
                         ( model, Cmd.none )
             )
+
+
+updateWithWalletAndClaimModal : Model -> (Wallet -> RemoteData () () -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
+updateWithWalletAndClaimModal model updater =
+    Maybe.map3
+        (\modal wallet _ ->
+            case modal of
+                MoneyDetail ->
+                    ( model, Cmd.none )
+
+                FeeExplanation ->
+                    ( model, Cmd.none )
+
+                StakingDetail _ ->
+                    ( model, Cmd.none )
+
+                ConfirmRewardClaim request ->
+                    updater wallet request
+
+                WithdrawDetail _ ->
+                    ( model, Cmd.none )
+
+                MigrationDetail _ ->
+                    ( model, Cmd.none )
+        )
+        model.modal
+        (RemoteData.toMaybe model.wallet)
+        (RemoteData.toMaybe model.userStakingInfo)
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 updateWithWalletAndWithdrawModal : Model -> (Wallet -> WithdrawInputForm -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
@@ -440,6 +507,9 @@ updateWithWalletAndWithdrawModal model updater =
                     ( model, Cmd.none )
 
                 StakingDetail _ ->
+                    ( model, Cmd.none )
+
+                ConfirmRewardClaim _ ->
                     ( model, Cmd.none )
 
                 WithdrawDetail info ->
@@ -466,6 +536,9 @@ updateWithWalletAndMigrationModal model updater =
                     ( model, Cmd.none )
 
                 StakingDetail _ ->
+                    ( model, Cmd.none )
+
+                ConfirmRewardClaim _ ->
                     ( model, Cmd.none )
 
                 WithdrawDetail _ ->
@@ -556,6 +629,18 @@ subscriptions { wallet, modal, visibility } =
                                             ]
                                     )
 
+                        ConfirmRewardClaim _ ->
+                            wallet
+                                |> RemoteData.unwrap Sub.none
+                                    (\_ ->
+                                        Ports.withdrawResponse
+                                            (Json.Decode.decodeValue
+                                                Model.StakingInfo.decoderWithdraw
+                                                >> Result.mapError (\_ -> ())
+                                                >> ClaimResponse
+                                            )
+                                    )
+
                         WithdrawDetail _ ->
                             wallet
                                 |> RemoteData.unwrap Sub.none
@@ -594,7 +679,7 @@ subscriptions { wallet, modal, visibility } =
                                     (Json.Decode.decodeValue Utils.Json.decoderOk
                                         >> Result.mapError (\_ -> ())
                                         >> UpdateMigration
-                                      )
+                                    )
                                 ]
                 )
         ]

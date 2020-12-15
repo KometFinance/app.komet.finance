@@ -1,5 +1,6 @@
 module View.AmountForm exposing
-    ( stakingModal
+    ( confirmRewardClaimModal
+    , stakingModal
     , withdrawModal
     )
 
@@ -9,7 +10,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, id, plac
 import Html.Events exposing (onBlur, onClick, onInput, onSubmit)
 import Html.Extra
 import Maybe.Extra
-import Model exposing (AmountInputForm, Images, StakingFormStage(..), WithdrawInputForm)
+import Model exposing (AmountInputForm, StakingFormStage(..), WithdrawInputForm)
 import Model.Balance exposing (Balance)
 import Model.StakingInfo exposing (RewardInfo, UserStakingInfo)
 import Model.Wallet exposing (Wallet)
@@ -19,8 +20,67 @@ import Utils.BigInt
 import View.Commons
 
 
-withdrawModal : Images -> WithdrawInputForm -> UserStakingInfo -> RewardInfo -> Html Msg
-withdrawModal _ ({ request } as withdrawInfo) userStakingInfo rewardInfo =
+confirmRewardClaimModal : RemoteData () () -> UserStakingInfo -> RewardInfo -> Html Msg
+confirmRewardClaimModal request userStakingInfo rewardInfo =
+    let
+        isLoading =
+            RemoteData.isLoading request
+    in
+    View.Commons.modal
+        { onClose =
+            if isLoading then
+                Nothing
+
+            else
+                Just <| ShowClaimConfirmation False
+        , progress =
+            case request of
+                NotAsked ->
+                    33
+
+                Loading ->
+                    66
+
+                Success _ ->
+                    100
+
+                Failure _ ->
+                    33
+        , content =
+            div [ class "p-5 card-body" ]
+                [ h3 [ class "text-center card-title" ]
+                    [ text "Claiming NOVA rewards" ]
+                , p [ class "mt-4 mb-0 text-center lead gradient_lp" ]
+                    [ text <| Model.Balance.humanReadableBalance 2 rewardInfo.reward ]
+                , p [ class "text-center text-muted" ]
+                    [ small []
+                        [ text "Pending NOVA" ]
+                    ]
+                , costBreakdown userStakingInfo rewardInfo (BigInt.fromInt 0) Claim
+                , button
+                    [ class "flex flex-row items-center justify-center mt-5 mb-0 btn btn-block btn-primary space-x-4"
+                    , disabled <| isLoading
+                    , onClick RewardClaim
+                    ]
+                  <|
+                    if isLoading then
+                        [ span [ class "spinner-border" ] []
+                        , span [] [ text "Claiming ..." ]
+                        ]
+
+                    else
+                        [ text "Start" ]
+                , if isLoading then
+                    wankyLoader
+
+                  else
+                    Html.Extra.nothing
+                ]
+        }
+
+
+withdrawModal : WithdrawInputForm -> UserStakingInfo -> RewardInfo -> Html Msg
+withdrawModal ({ request } as withdrawInfo) userStakingInfo rewardInfo =
     View.Commons.modal
         { onClose =
             if RemoteData.isLoading request then
@@ -29,24 +89,18 @@ withdrawModal _ ({ request } as withdrawInfo) userStakingInfo rewardInfo =
             else
                 Just <| ShowWithdrawConfirmation False
         , progress =
-            case ( NotAsked, request ) of
-                ( NotAsked, _ ) ->
-                    0
+            case request of
+                NotAsked ->
+                    33
 
-                ( Loading, _ ) ->
-                    25
+                Loading ->
+                    66
 
-                ( Success _, NotAsked ) ->
-                    50
+                Success _ ->
+                    100
 
-                ( Success _, Failure _ ) ->
-                    50
-
-                ( Success _, Loading ) ->
-                    75
-
-                ( _, _ ) ->
-                    25
+                Failure _ ->
+                    33
         , content =
             viewInput
                 { title = "Withdraw KOMET/ETH LP tokens"
@@ -185,6 +239,7 @@ type alias Form a =
 
 type Move
     = Withdrawal
+    | Claim
     | Deposit
 
 
@@ -320,6 +375,9 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                                             , span [ class "font-bold text-black" ] [ text "0.1" ]
                                             , text " KOMET/ETH LP to add tokens to the pool"
                                             ]
+
+                                        Claim ->
+                                            []
                         )
                 , button
                     [ class "flex flex-row items-center justify-center mt-5 mb-0 btn btn-block btn-primary space-x-4"
@@ -379,10 +437,13 @@ costBreakdown userStakingInfo { reward, fees } amount move =
 
                                 Deposit ->
                                     BigInt.add stakingAmount amount
+
+                                Claim ->
+                                    stakingAmount
                     ]
                 , case move of
                     Withdrawal ->
-                        span [ class "text-sm text-danger" ]
+                        span [ class "text-danger" ]
                             [ text <|
                                 "(-\u{00A0}"
                                     ++ Utils.BigInt.toBaseUnit amount
@@ -390,11 +451,17 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                             ]
 
                     Deposit ->
-                        span [ class "text-sm text-primary" ]
+                        span [ class "text-primary" ]
                             [ text <|
                                 "(+\u{00A0}"
                                     ++ Utils.BigInt.toBaseUnit amount
                                     ++ ")"
+                            ]
+
+                    Claim ->
+                        span [ class "text-primary" ]
+                            [ text <|
+                                "(No Changes!)"
                             ]
                 , span [ class "text-secondary" ] [ text "KOMET/ETH LP" ]
                 ]
@@ -413,5 +480,32 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                     , span [] [ text "% fees)" ]
                     ]
                 ]
+            , h4 [ class "pt-2 pb-0 mb-0 text-lg text-muted" ]
+                [ text "Your fees" ]
+            , p [ class "flex flex-row items-center space-x-2" ] <|
+                case move of
+                    Deposit ->
+                        [ span [ class "text-info" ]
+                            [ text <| String.fromInt fees ++ "%"
+                            ]
+                        , span [ class "text-secondary" ] [ text "(No changes!)" ]
+                        ]
+
+                    Claim ->
+                        [ span [ class "text-info" ]
+                            [ text <| String.fromInt fees ++ "%"
+                            ]
+                        , span [ class "text-secondary" ] [ text "(No changes!)" ]
+                        ]
+
+                    Withdrawal ->
+                        [ span [ class "text-info" ]
+                            [ text "30%"
+                            ]
+                        , span [ class "text-danger" ]
+                            [ text <| "(+" ++ String.fromInt (fees - 30) ++ ")"
+                            ]
+                        , span [ class "text-secondary" ] [ text "(reset)" ]
+                        ]
             ]
         ]
