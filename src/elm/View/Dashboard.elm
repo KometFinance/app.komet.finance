@@ -126,7 +126,7 @@ generalInfoAndCTA images wallet =
                         ]
                     ]
                 , span [ class "text-muted" ]
-                    [ text "Total balance" ]
+                    [ text "Available balance for Staking" ]
                 ]
             , div [ class "ml-auto btn-liqui d-flex justify-content-end" ]
                 [ a
@@ -283,7 +283,7 @@ viewFidelity remoteRewardInfo =
     div [ class "my-3 card Appboard my-md-0 w-100", id "PlasmaPower" ]
         [ div [ class "p-4 card-body" ]
             [ h3 [ class "mb-0 text-center card-title" ]
-                [ text "Fee breakdown" ]
+                [ text "Fees breakdown" ]
             , p [ class "text-center text-muted" ]
                 [ small []
                     [ text "Your staking fidelity" ]
@@ -291,7 +291,7 @@ viewFidelity remoteRewardInfo =
             , RemoteData.toMaybe remoteRewardInfo
                 |> Html.Extra.viewMaybe
                     (\{ fees } ->
-                        div [ class "my-3" ]
+                        div [ class "my-4" ]
                             [ h6 []
                                 [ text <| String.fromInt fees ++ "% withdraw fees" ]
                             , feeSlider fees
@@ -299,13 +299,13 @@ viewFidelity remoteRewardInfo =
                                 [ text "Current withdraw fees on your NOVA reward" ]
                             ]
                     )
-            , div [ class "p-2 text-left card text-muted space-y-2" ]
+            , div [ class "p-4 text-left card text-muted space-y-2" ]
                 [ p [ class "text-justify" ]
                     [ text "Fees only apply to withdrawing the NOVA you get as a reward for staking. "
-                    , span [ class "text-primary" ]
+                    , span [ class "text-warning" ]
                         [ text "We will never tax your KOMET/ETH LP tokens transactions!" ]
                     ]
-                , a [ class "btn btn-link", onClick <| ShowFeeExplanation True ] [ text "Read More" ]
+                , a [ class "btn btn-outline-primary", onClick <| ShowFeeExplanation True ] [ text "Read More" ]
                 ]
             ]
         ]
