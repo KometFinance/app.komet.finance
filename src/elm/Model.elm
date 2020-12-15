@@ -36,6 +36,7 @@ type Modal
       MoneyDetail
     | StakingDetail AmountInputForm
     | WithdrawDetail WithdrawInputForm
+    | ConfirmRewardClaim (RemoteData () ())
     | FeeExplanation
     | MigrationDetail MigrationState
 
