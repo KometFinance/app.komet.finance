@@ -48,6 +48,9 @@ jobs:
         LP: ${{ secrets.LP }}
         NOVA: ${{ secrets.NOVA }}
         MU: ${{ secrets.MU }}
+        NOVA1: ${{ secrets.NOVA1 }}
+        MU1: ${{ secrets.MU1 }}
+        NOVA_MIG: ${{ secrets.NOVA_MIG }}
     - run: yarn lint
     - run: yarn test
 
@@ -87,7 +90,9 @@ jobs:
         LP: ${{ secrets.LP }}
         NOVA: ${{ secrets.NOVA }}
         MU: ${{ secrets.MU }}
-
+        NOVA1: ${{ secrets.NOVA1 }}
+        MU1: ${{ secrets.MU1 }}
+        NOVA_MIG: ${{ secrets.NOVA_MIG }}
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
