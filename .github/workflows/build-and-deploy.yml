@@ -100,5 +100,5 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         allow_empty_commit: true
         publish_dir: ./dist
-        cname: test.komet.finance
+        cname: app.komet.finance
 
