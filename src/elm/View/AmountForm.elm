@@ -493,14 +493,14 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                         [ span [ class "text-info" ]
                             [ text <| String.fromInt fees ++ "%"
                             ]
-                        , span [ class "text-secondary" ] [ text "(No changes!)" ]
+                        , span [ class "text-success" ] [ text "(No changes!)" ]
                         ]
 
                     Claim ->
                         [ span [ class "text-info" ]
                             [ text <| String.fromInt fees ++ "%"
                             ]
-                        , span [ class "text-secondary" ] [ text "(No changes!)" ]
+                        , span [ class "text-success" ] [ text "(No changes!)" ]
                         ]
 
                     Withdrawal ->
@@ -508,9 +508,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                             [ text "30%"
                             ]
                         , span [ class "text-danger" ]
-                            [ text <| "(+" ++ String.fromInt (fees - 30) ++ ")"
-                            ]
-                        , span [ class "text-secondary" ] [ text "(reset)" ]
+                            [ text <| "(reset: +" ++ String.fromInt (fees - 30) ++ "%)" ]
                         ]
             ]
         ]

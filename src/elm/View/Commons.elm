@@ -70,7 +70,9 @@ modal { onClose, progress, content } =
                                 ]
                                 []
                             ]
-                        , content
+                        , div [ class "overflow-y-auto" ]
+                            [ content
+                            ]
                         ]
                     ]
                 ]
