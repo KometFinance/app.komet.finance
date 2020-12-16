@@ -31,7 +31,7 @@ dashboard { images, wallet, userStakingInfo, rewardInfo, generalStakingInfo, old
                     ]
             , div [ class "row" ]
                 [ div [ class "col-12" ]
-                    [ wallet |> RemoteData.toMaybe |> viewMaybe (generalInfoAndCTA images)
+                    [ wallet |> RemoteData.toMaybe |> viewMaybe (generalInfoAndCTA images (RemoteData.toMaybe userStakingInfo))
                     ]
                 ]
             , div [ class "row" ]
@@ -122,8 +122,8 @@ viewReward remoteUserStakingInfo remoteRewardInfo =
         ]
 
 
-generalInfoAndCTA : Images -> Wallet -> Html Msg
-generalInfoAndCTA images wallet =
+generalInfoAndCTA : Images -> Maybe UserStakingInfo -> Wallet -> Html Msg
+generalInfoAndCTA images userStakingInfo wallet =
     let
         ( lpUnit, lpDecimals ) =
             split 4 wallet.lpBalance
@@ -161,7 +161,14 @@ generalInfoAndCTA images wallet =
                             , onClick <| ShowStakingForm True
                             ]
                             [ img [ src images.stakingGem ] []
-                            , span [] [ text "Start staking" ]
+                            , span []
+                                [ text <|
+                                    if Maybe.Extra.unwrap False Model.StakingInfo.isStaking userStakingInfo then
+                                        "Stake more"
+
+                                    else
+                                        "Start staking"
+                                ]
                             ]
                         ]
                 ]

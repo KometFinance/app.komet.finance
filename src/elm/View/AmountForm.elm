@@ -257,14 +257,14 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
         availableBigInt =
             Model.Balance.toBigInt config.available
 
-        maybeAmount : Maybe BigInt
+        maybeAmount : String -> Maybe BigInt
         maybeAmount =
-            Utils.BigInt.fromBaseUnit amountInput
-                |> Maybe.map (BigInt.min availableBigInt)
+            Utils.BigInt.fromBaseUnit
+                >> Maybe.map (BigInt.min availableBigInt)
 
         isValid : Bool
         isValid =
-            maybeAmount
+            maybeAmount amountInput
                 |> Maybe.Extra.unwrap False
                     config.validityTest
 
@@ -280,8 +280,8 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
         validateInput =
             config.updateMsg <|
                 { inputForm
-                    | amount = maybeAmount |> Maybe.withDefault (BigInt.fromInt 0)
-                    , amountInput = Maybe.Extra.unwrap "" Utils.BigInt.toBaseUnit maybeAmount
+                    | amount = maybeAmount amountInput |> Maybe.withDefault (BigInt.fromInt 0)
+                    , amountInput = Maybe.Extra.unwrap "" Utils.BigInt.toBaseUnit (maybeAmount amountInput)
                 }
 
         updateInput : String -> Msg
@@ -290,7 +290,7 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                 config.updateMsg <|
                     { inputForm
                         | amountInput = str
-                        , amount = maybeAmount |> Maybe.withDefault (BigInt.fromInt 0)
+                        , amount = maybeAmount str |> Maybe.withDefault (BigInt.fromInt 0)
                     }
     in
     div [ class "p-5 card-body" ]
@@ -326,7 +326,7 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                         , classList
                             [ ( "is-invalid"
                               , (amountInput /= "")
-                                    && (maybeAmount == Nothing)
+                                    && (maybeAmount amountInput == Nothing)
                               )
                             ]
                         , value amountInput
@@ -358,8 +358,8 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                                 Html.Extra.nothing
                         )
                         maybeStakingAndRewards
-                        maybeAmount
-                , maybeAmount
+                        (maybeAmount amountInput)
+                , maybeAmount amountInput
                     |> Html.Extra.viewMaybe
                         (\_ ->
                             Html.Extra.viewIf (not isValid) <|

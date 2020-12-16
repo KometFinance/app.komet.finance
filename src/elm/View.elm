@@ -25,7 +25,7 @@ view ({ wallet, oldState, userStakingInfo, rewardInfo, images, modal } as model)
         , div [ id "app", class "relative flex flex-col p-0 container-fluid" ]
             [ div [ class "flex flex-col flex-grow" ]
                 [ header model
-                , div [ id "dashboard", class "flex flex-col items-center flex-grow w-full pt-8" ]
+                , div [ id "dashboard", class "flex flex-col items-center flex-grow w-full" ]
                     [ div [ class "flex flex-col items-center justify-center flex-grow w-full" ]
                         [ let
                             connectButton =
@@ -181,7 +181,7 @@ feeExplanationModal =
 
 header : Model -> Html.Html msg
 header { images, wallet } =
-    nav [ id "AppTopbar", class "pb-3 fixed-top bg_darknav" ]
+    nav [ id "AppTopbar", class "pb-3 bg_darknav" ]
         [ div [ class "flex justify-end" ]
             [ a [ class "mr-auto navbar-brand", href "#" ]
                 [ img [ src images.appLogo, width 30, class "align-top d-inline-block", alt "Komet logo", attribute "loading" "lazy" ] []
@@ -246,7 +246,7 @@ ellipseAddress address =
 
 appFooter : Images -> Html Msg
 appFooter images =
-    div [ class "container pt-2 mt-5 pt-md-5" ]
+    div [ class "container" ]
         [ footer [ class "col-12" ]
             [ div [ class "bottombar col-12" ]
                 []
