@@ -4,6 +4,7 @@ import Html exposing (Html, a, button, div, h3, h4, h5, h6, hr, img, li, node, p
 import Html.Attributes exposing (attribute, class, disabled, href, id, src, target, type_)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
+import Maybe.Extra
 import Model exposing (Images, Model)
 import Model.Balance exposing (split)
 import Model.OldState
@@ -91,7 +92,13 @@ viewReward remoteUserStakingInfo remoteRewardInfo =
                                     [ text <| "." ++ decimals ]
                                 ]
                             ]
-                        , node "plasma-reward" [] []
+                        , remoteUserStakingInfo
+                            |> RemoteData.toMaybe
+                            |> Maybe.Extra.filter isStaking
+                            |> Html.Extra.viewMaybe
+                                (\_ ->
+                                    node "plasma-reward" [] []
+                                )
                         ]
             , button
                 [ class "mt-3 btn btn-primary btn-block"
@@ -300,7 +307,7 @@ viewFidelity remoteRewardInfo =
             , RemoteData.toMaybe remoteRewardInfo
                 |> Html.Extra.viewMaybe
                     (\{ fees } ->
-                        div [ class "my-4" ]
+                        div [ class "my-8" ]
                             [ h6 []
                                 [ text <| String.fromInt fees ++ "% withdraw fees" ]
                             , feeSlider fees
@@ -308,7 +315,7 @@ viewFidelity remoteRewardInfo =
                                 [ text "Current withdraw fees on your NOVA reward" ]
                             ]
                     )
-            , div [ class "p-4 text-left card text-muted space-y-2" ]
+            , div [ class "p-4 text-left card text-muted space-y-8" ]
                 [ p [ class "text-justify" ]
                     [ text "Fees only apply to withdrawing the NOVA you get as a reward for staking. "
                     , span [ class "text-warning" ]

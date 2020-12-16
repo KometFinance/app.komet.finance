@@ -19,6 +19,7 @@ import Model.Wallet exposing (Wallet, WalletError)
 import Ports
 import RemoteData exposing (RemoteData(..))
 import Result.Extra
+import Task
 import Time
 import Utils.BigInt
 import Utils.Json
@@ -219,7 +220,10 @@ update msg model =
             , model.wallet
                 |> RemoteData.unwrap Cmd.none
                     (\wallet ->
-                        Ports.requestOldState wallet.address
+                        Cmd.batch
+                            [ Ports.requestOldState wallet.address
+                            , Task.succeed () |> Task.perform (\_ -> RefreshInfo)
+                            ]
                     )
             )
 
