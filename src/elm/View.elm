@@ -11,7 +11,7 @@ import Model.OldState exposing (MigrationState, MigrationStep(..), OldState)
 import Model.Wallet exposing (Wallet, WalletError(..))
 import RemoteData exposing (RemoteData(..))
 import Update exposing (Msg(..))
-import View.AmountForm exposing (stakingModal, withdrawModal)
+import View.AmountForm exposing (confirmRewardClaimModal, stakingModal, withdrawModal)
 import View.Commons exposing (defaultLoader, modal)
 import View.Dashboard exposing (dashboard)
 
@@ -87,12 +87,27 @@ view ({ wallet, oldState, userStakingInfo, rewardInfo, images, modal } as model)
                                             )
                                             wallet
 
-                                    Model.WithdrawDetail fees ->
+                                    Model.WithdrawDetail form ->
                                         RemoteData.map2
                                             (\userStakingInfo_ rewardInfo_ ->
                                                 div []
-                                                    [ withdrawModal images fees userStakingInfo_ rewardInfo_
+                                                    [ withdrawModal form userStakingInfo_ rewardInfo_
                                                     , div [ class "modal-backdrop fade show" ] []
+                                                    ]
+                                            )
+                                            userStakingInfo
+                                            rewardInfo
+                                            |> RemoteData.withDefault Html.Extra.nothing
+
+                                    Model.ConfirmRewardClaim request ->
+                                        RemoteData.map2
+                                            (\userStakingInfo_ rewardInfo_ ->
+                                                div []
+                                                    [ confirmRewardClaimModal request userStakingInfo_ rewardInfo_
+                                                    , div
+                                                        [ class "modal-backdrop fade show"
+                                                        ]
+                                                        []
                                                     ]
                                             )
                                             userStakingInfo

@@ -94,6 +94,15 @@ viewReward remoteUserStakingInfo remoteRewardInfo =
                         , node "plasma-reward" [] []
                         ]
             , button
+                [ class "mt-3 btn btn-primary btn-block"
+                , type_ "submit"
+                , remoteUserStakingInfo
+                    |> RemoteData.unwrap True (not << isStaking)
+                    |> disabled
+                , onClick <| ShowClaimConfirmation True
+                ]
+                [ text "Claim rewards" ]
+            , button
                 [ class "mt-3 btn btn-outline-primary btn-block"
                 , type_ "submit"
                 , remoteUserStakingInfo
@@ -101,7 +110,7 @@ viewReward remoteUserStakingInfo remoteRewardInfo =
                     |> disabled
                 , onClick <| ShowWithdrawConfirmation True
                 ]
-                [ text "Withdraw earnings" ]
+                [ text "Withdraw LP" ]
             ]
         ]
 
