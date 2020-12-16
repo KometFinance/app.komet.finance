@@ -9,7 +9,7 @@ import './ts/custom-elements/plasma'
 if (window.ethereum) {
   // eslint-disable-next-line no-undef
   (window.ethereum as any).autoRefreshOnNetworkChange = false
-  setup()
+  // setup()
 } else {
   document.getElementById('install-metamask').hidden = false
 }
