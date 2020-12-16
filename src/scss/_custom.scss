@@ -651,6 +651,7 @@ body,
 }
 #StackingModal {
   /// Gradient ///
+  overflow-y: auto;
   .gradient_lp {
     background: linear-gradient(270deg, #aeffde 0%, #76ffba 100%);
     text-shadow: none !important;
