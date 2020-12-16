@@ -4,6 +4,7 @@ import Html exposing (Html, a, button, div, h3, h4, h5, h6, hr, img, li, node, p
 import Html.Attributes exposing (attribute, class, disabled, href, id, src, target, type_)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
+import Maybe.Extra
 import Model exposing (Images, Model)
 import Model.Balance exposing (split)
 import Model.OldState
@@ -30,7 +31,7 @@ dashboard { images, wallet, userStakingInfo, rewardInfo, generalStakingInfo, old
                     ]
             , div [ class "row" ]
                 [ div [ class "col-12" ]
-                    [ wallet |> RemoteData.toMaybe |> viewMaybe (generalInfoAndCTA images)
+                    [ wallet |> RemoteData.toMaybe |> viewMaybe (generalInfoAndCTA images (RemoteData.toMaybe userStakingInfo))
                     ]
                 ]
             , div [ class "row" ]
@@ -91,7 +92,13 @@ viewReward remoteUserStakingInfo remoteRewardInfo =
                                     [ text <| "." ++ decimals ]
                                 ]
                             ]
-                        , node "plasma-reward" [] []
+                        , remoteUserStakingInfo
+                            |> RemoteData.toMaybe
+                            |> Maybe.Extra.filter isStaking
+                            |> Html.Extra.viewMaybe
+                                (\_ ->
+                                    node "plasma-reward" [] []
+                                )
                         ]
             , button
                 [ class "mt-3 btn btn-primary btn-block"
@@ -115,8 +122,8 @@ viewReward remoteUserStakingInfo remoteRewardInfo =
         ]
 
 
-generalInfoAndCTA : Images -> Wallet -> Html Msg
-generalInfoAndCTA images wallet =
+generalInfoAndCTA : Images -> Maybe UserStakingInfo -> Wallet -> Html Msg
+generalInfoAndCTA images userStakingInfo wallet =
     let
         ( lpUnit, lpDecimals ) =
             split 4 wallet.lpBalance
@@ -135,7 +142,7 @@ generalInfoAndCTA images wallet =
                         ]
                     ]
                 , span [ class "text-muted" ]
-                    [ text "Total balance" ]
+                    [ text "Available balance for Staking" ]
                 ]
             , div [ class "ml-auto btn-liqui d-flex justify-content-end" ]
                 [ a
@@ -154,7 +161,14 @@ generalInfoAndCTA images wallet =
                             , onClick <| ShowStakingForm True
                             ]
                             [ img [ src images.stakingGem ] []
-                            , span [] [ text "Start staking" ]
+                            , span []
+                                [ text <|
+                                    if Maybe.Extra.unwrap False Model.StakingInfo.isStaking userStakingInfo then
+                                        "Stake more"
+
+                                    else
+                                        "Start staking"
+                                ]
                             ]
                         ]
                 ]
@@ -292,7 +306,7 @@ viewFidelity remoteRewardInfo =
     div [ class "my-3 card Appboard my-md-0 w-100", id "PlasmaPower" ]
         [ div [ class "p-4 card-body" ]
             [ h3 [ class "mb-0 text-center card-title" ]
-                [ text "Fee breakdown" ]
+                [ text "Fees breakdown" ]
             , p [ class "text-center text-muted" ]
                 [ small []
                     [ text "Your staking fidelity" ]
@@ -300,7 +314,7 @@ viewFidelity remoteRewardInfo =
             , RemoteData.toMaybe remoteRewardInfo
                 |> Html.Extra.viewMaybe
                     (\{ fees } ->
-                        div [ class "my-3" ]
+                        div [ class "my-8" ]
                             [ h6 []
                                 [ text <| String.fromInt fees ++ "% withdraw fees" ]
                             , feeSlider fees
@@ -308,13 +322,13 @@ viewFidelity remoteRewardInfo =
                                 [ text "Current withdraw fees on your NOVA reward" ]
                             ]
                     )
-            , div [ class "p-2 text-left card text-muted space-y-2" ]
+            , div [ class "p-4 text-left card text-muted space-y-8" ]
                 [ p [ class "text-justify" ]
                     [ text "Fees only apply to withdrawing the NOVA you get as a reward for staking. "
-                    , span [ class "text-primary" ]
+                    , span [ class "text-warning" ]
                         [ text "We will never tax your KOMET/ETH LP tokens transactions!" ]
                     ]
-                , a [ class "btn btn-link", onClick <| ShowFeeExplanation True ] [ text "Read More" ]
+                , a [ class "btn btn-outline-primary", onClick <| ShowFeeExplanation True ] [ text "Read More" ]
                 ]
             ]
         ]

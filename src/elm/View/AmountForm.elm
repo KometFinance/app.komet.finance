@@ -6,7 +6,7 @@ module View.AmountForm exposing
 
 import BigInt exposing (BigInt)
 import Html exposing (Html, button, div, fieldset, form, h1, h3, h4, input, p, small, span, text)
-import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, style, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput, onSubmit)
 import Html.Extra
 import Maybe.Extra
@@ -51,7 +51,10 @@ confirmRewardClaimModal request userStakingInfo rewardInfo =
                 [ h3 [ class "text-center card-title" ]
                     [ text "Claiming NOVA rewards" ]
                 , p [ class "mt-4 mb-0 text-center lead gradient_lp" ]
-                    [ text <| Model.Balance.humanReadableBalance 2 rewardInfo.reward ]
+                    [ text <|
+                        Model.Balance.humanReadableBalance 2 <|
+                            Model.Balance.minusFees rewardInfo.fees rewardInfo.reward
+                    ]
                 , p [ class "text-center text-muted" ]
                     [ small []
                         [ text "Pending NOVA" ]
@@ -254,14 +257,14 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
         availableBigInt =
             Model.Balance.toBigInt config.available
 
-        maybeAmount : Maybe BigInt
+        maybeAmount : String -> Maybe BigInt
         maybeAmount =
-            Utils.BigInt.fromBaseUnit amountInput
-                |> Maybe.map (BigInt.min availableBigInt)
+            Utils.BigInt.fromBaseUnit
+                >> Maybe.map (BigInt.min availableBigInt)
 
         isValid : Bool
         isValid =
-            maybeAmount
+            maybeAmount amountInput
                 |> Maybe.Extra.unwrap False
                     config.validityTest
 
@@ -277,8 +280,8 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
         validateInput =
             config.updateMsg <|
                 { inputForm
-                    | amount = maybeAmount |> Maybe.withDefault (BigInt.fromInt 0)
-                    , amountInput = Maybe.Extra.unwrap "" Utils.BigInt.toBaseUnit maybeAmount
+                    | amount = maybeAmount amountInput |> Maybe.withDefault (BigInt.fromInt 0)
+                    , amountInput = Maybe.Extra.unwrap "" Utils.BigInt.toBaseUnit (maybeAmount amountInput)
                 }
 
         updateInput : String -> Msg
@@ -287,7 +290,7 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                 config.updateMsg <|
                     { inputForm
                         | amountInput = str
-                        , amount = maybeAmount |> Maybe.withDefault (BigInt.fromInt 0)
+                        , amount = maybeAmount str |> Maybe.withDefault (BigInt.fromInt 0)
                     }
     in
     div [ class "p-5 card-body" ]
@@ -323,7 +326,7 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                         , classList
                             [ ( "is-invalid"
                               , (amountInput /= "")
-                                    && (maybeAmount == Nothing)
+                                    && (maybeAmount amountInput == Nothing)
                               )
                             ]
                         , value amountInput
@@ -355,8 +358,8 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                                 Html.Extra.nothing
                         )
                         maybeStakingAndRewards
-                        maybeAmount
-                , maybeAmount
+                        (maybeAmount amountInput)
+                , maybeAmount amountInput
                     |> Html.Extra.viewMaybe
                         (\_ ->
                             Html.Extra.viewIf (not isValid) <|
@@ -406,13 +409,15 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
 
 wankyLoader : Html msg
 wankyLoader =
-    div [ class "pt-4 loader" ]
-        [ div [ class "dot dot-1" ]
-            []
-        , div [ class "dot dot-2" ]
-            []
-        , div [ class "dot dot-3" ]
-            []
+    div [ class "absolute top-0 bottom-0 left-0 right-0 flex flex-row items-center justify-center bg-black bg-opacity-50", style "z-index" "1000000" ]
+        [ div [ class "pt-4 loader", style "z-index" "1000000" ]
+            [ div [ class "dot dot-1" ]
+                []
+            , div [ class "dot dot-2" ]
+                []
+            , div [ class "dot dot-3" ]
+                []
+            ]
         ]
 
 
@@ -451,7 +456,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                             ]
 
                     Deposit ->
-                        span [ class "text-primary" ]
+                        span [ class "text-success" ]
                             [ text <|
                                 "(+\u{00A0}"
                                     ++ Utils.BigInt.toBaseUnit amount
@@ -459,7 +464,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                             ]
 
                     Claim ->
-                        span [ class "text-primary" ]
+                        span [ class "text-success" ]
                             [ text <|
                                 "(No Changes!)"
                             ]
