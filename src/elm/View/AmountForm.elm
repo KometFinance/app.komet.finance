@@ -451,7 +451,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                             ]
 
                     Deposit ->
-                        span [ class "text-primary" ]
+                        span [ class "text-success" ]
                             [ text <|
                                 "(+\u{00A0}"
                                     ++ Utils.BigInt.toBaseUnit amount
@@ -459,7 +459,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                             ]
 
                     Claim ->
-                        span [ class "text-primary" ]
+                        span [ class "text-success" ]
                             [ text <|
                                 "(No Changes!)"
                             ]

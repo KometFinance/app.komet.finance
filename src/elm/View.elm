@@ -287,7 +287,16 @@ appFooter images =
 migrationModal : OldState -> MigrationState -> Html Msg
 migrationModal { oldNova, oldStaking } ({ currentStep } as state) =
     modal
-        { onClose = Nothing
+        { onClose =
+            case currentStep of
+                Start ->
+                    Just <| ShowMigrationPanel False
+
+                Done ->
+                    Just <| ShowMigrationPanel False
+
+                _ ->
+                    Nothing
 
         --  TODO calculate the progress nicely based on what's required
         , progress = 0
