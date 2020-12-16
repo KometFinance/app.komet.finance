@@ -3,7 +3,7 @@ import './tailwind-build.css'
 import './main.scss'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'babel-polyfill'
-import { setup } from './ts/setup'
+// import { setup } from './ts/setup'
 import './ts/custom-elements/plasma'
 
 if (window.ethereum) {
