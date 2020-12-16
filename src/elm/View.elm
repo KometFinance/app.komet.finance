@@ -148,32 +148,39 @@ feeExplanationModal =
         { onClose = Just <| ShowFeeExplanation False
         , progress = 0
         , content =
-            div []
-                [ p [ class "text-justify" ]
+            div [ class "flex flex-col p-4 space-y-4" ]
+                [ p [ class "text-justify alert alert-warning" ]
                     [ text "Fees only apply to withdrawing the NOVA you get as a reward for staking. "
-                    , span [ class "text-primary" ]
+                    , span [ class "font-bold" ]
                         [ text "We will never tax your KOMET/ETH LP tokens transactions!" ]
                     , br [] []
-                    , text <| "Fees start at "
-                    , span [ class "text-secondary" ] [ text "30%" ]
-                    , text " and decrease by "
-                    , span [ class "text-primary" ] [ text "1%" ]
-                    , text " every second day until reaching "
-                    , span [ class "text-prumary" ]
-                        [ text
-                            "1%"
+                    , span [ class "mt-2" ]
+                        [ text <| "Fees start at "
+                        , span [ class "font-bold text-danger" ] [ text "30%" ]
+                        , text " and decrease by "
+                        , span [ class "font-bold text-success" ] [ text "1%" ]
+                        , text " every second day until reaching "
+                        , span [ class "font-bold text-success" ]
+                            [ text
+                                "1%"
+                            ]
+                        , text " (60 days after staking)."
                         ]
-                    , text " (60 days after staking)."
                     ]
-                , p [ class "text-justify" ]
+                , p [ class "text-justify text-white" ]
                     [ span [ class "font-bold" ] [ text "Remember:" ]
                     , text " adding funds to your stake will not reset the fee counter. You will claim your NOVA rewards when adding to your stake but your fees won't reset to 30%."
                     , br [] []
-                    , text "E.g.: if you have 10 NOVA waiting as rewards when adding to your stake and you have been staking for 10 days, your fee level will be at 25%. You will receive 7.5 NOVA but your fees will remain 25% and continue to decrease every day."
+                    , span [ class "mt-2 text-muted" ]
+                        [ text "E.g.: if you have 10 NOVA waiting as rewards when adding to your stake and you have been staking for 10 days, your fee level will be at 25%. You will receive 7.5 NOVA but your fees will remain 25% and continue to decrease every day."
+                        ]
+                    ]
+                , p [ class "text-justify" ]
+                    [ text "The same applies if you use the button claim rewards, however if you elect to withdraw all or part of your stake, your fees will reset to 30%."
                     , br [] []
-                    , text "The same applies if you use the button claim rewards, however if you elect to withdraw all or part of your stake, your fees will reset to 30%."
-                    , br [] []
-                    , text "E.g. you have been staking for 30 days, your fees are now at 15%, and you have 20 NOVA as a pending reward. Withdrawing any amount of your stake at this point means you will receive 17 NOVA, but your fees will then go back to 30%."
+                    , span [ class "mt-2 text-muted" ]
+                        [ text "E.g. you have been staking for 30 days, your fees are now at 15%, and you have 20 NOVA as a pending reward. Withdrawing any amount of your stake at this point means you will receive 17 NOVA, but your fees will then go back to 30%."
+                        ]
                     ]
                 ]
         }
@@ -297,8 +304,6 @@ migrationModal { oldNova, oldStaking } ({ currentStep } as state) =
 
                 _ ->
                     Nothing
-
-        --  TODO calculate the progress nicely based on what's required
         , progress = 0
         , content =
             let
