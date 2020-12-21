@@ -431,7 +431,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
             , p [ class "flex flex-row items-center space-x-2" ]
                 [ span [ class "text-info" ]
                     [ text <|
-                        Utils.BigInt.toBaseUnit <|
+                        Utils.BigInt.humanReadable 4 <|
                             let
                                 stakingAmount =
                                     Model.Balance.toBigInt userStakingInfo.amount
@@ -451,7 +451,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                         span [ class "text-danger" ]
                             [ text <|
                                 "(-\u{00A0}"
-                                    ++ Utils.BigInt.toBaseUnit amount
+                                    ++ Utils.BigInt.humanReadable 2 amount
                                     ++ ")"
                             ]
 
@@ -459,7 +459,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                         span [ class "text-success" ]
                             [ text <|
                                 "(+\u{00A0}"
-                                    ++ Utils.BigInt.toBaseUnit amount
+                                    ++ Utils.BigInt.humanReadable 2 amount
                                     ++ ")"
                             ]
 

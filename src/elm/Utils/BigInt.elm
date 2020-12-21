@@ -1,13 +1,18 @@
 module Utils.BigInt exposing
-    ( encode
+    ( baseFactor
+    , encode
     , fromBaseUnit
+    , humanReadable
+    , percentOf
     , toBaseUnit
+    , toBaseUnitAndDecimals
     , toInt
     )
 
 import BigInt exposing (BigInt)
 import Json.Encode
 import Maybe.Extra
+import Round
 import String
 
 
@@ -48,8 +53,8 @@ fromBaseUnit =
            )
 
 
-toBaseUnit : BigInt -> String
-toBaseUnit =
+toBaseUnitAndDecimals : BigInt -> ( String, String )
+toBaseUnitAndDecimals =
     BigInt.toString
         >> (\str ->
                 let
@@ -80,10 +85,53 @@ toBaseUnit =
                                 )
                                 Nothing
                             |> Maybe.map String.fromList
+                            |> Maybe.withDefault ""
                 in
-                unit
-                    ++ Maybe.Extra.unwrap "" ((++) ".") decimals
+                ( unit, decimals )
            )
+
+
+toBaseUnit : BigInt -> String
+toBaseUnit =
+    toBaseUnitAndDecimals
+        >> (\( unit, decimals ) ->
+                unit
+                    ++ (if String.isEmpty decimals then
+                            ""
+
+                        else
+                            "." ++ decimals
+                       )
+           )
+
+
+humanReadable : Int -> BigInt -> String
+humanReadable precision =
+    toBaseUnitAndDecimals
+        >> (\( unit, decimals ) ->
+                unit
+                    ++ (if String.isEmpty decimals then
+                            ""
+
+                        else
+                            decimals |> String.left precision |> (++) "."
+                       )
+           )
+
+
+percentOf : Int -> BigInt -> BigInt -> Maybe String
+percentOf precision big1 big2 =
+    if BigInt.gt big2 (BigInt.fromInt 0) then
+        BigInt.mul big1 (BigInt.fromInt 100)
+            |> (\times100 ->
+                    BigInt.div times100 big2
+                        |> BigInt.toString
+                        |> String.toFloat
+                        |> Maybe.map (Round.round precision)
+               )
+
+    else
+        Nothing
 
 
 encode : BigInt -> Json.Encode.Value

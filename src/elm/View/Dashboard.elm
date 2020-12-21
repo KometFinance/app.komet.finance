@@ -213,10 +213,10 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo =
                                 , small []
                                     [ text <| "." ++ decimals ++ " KOMET/ETH LP"
                                     , span [ class "ml-2 text-muted" ]
-                                        [ Model.Balance.percentOf amount totalLpStaked
+                                        [ Model.Balance.percentOf 2 amount totalLpStaked
                                             |> viewMaybe
                                                 (\percent ->
-                                                    text <| "(" ++ Round.round 2 percent ++ "% of total)"
+                                                    text <| "(" ++ percent ++ "% of total)"
                                                 )
                                         ]
                                     ]
