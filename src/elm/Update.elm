@@ -15,7 +15,7 @@ import Model exposing (AmountInputForm, Images, Modal(..), Model, StakingFormSta
 import Model.Balance
 import Model.OldState exposing (MigrationState, MigrationStep(..), OldState)
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
-import Model.Wallet exposing (Wallet, WalletError)
+import Model.Wallet exposing (Token, Wallet, WalletError)
 import Ports
 import RemoteData exposing (RemoteData(..))
 import Result.Extra
@@ -33,6 +33,7 @@ type Msg
     | UpdateGeneralStakingInfo (Result StakingInfoError GeneralStakingInfo)
     | UpdateReward (Result StakingInfoError RewardInfo)
     | UpdateOldState (Result () OldState)
+    | ShowMoneyDetails (Maybe Token)
     | ShowStakingForm Bool
     | ShowFeeExplanation Bool
     | ShowWithdrawConfirmation Bool
@@ -166,6 +167,12 @@ update msg model =
 
         UpdateGeneralStakingInfo generalStakingInfo ->
             ( { model | generalStakingInfo = RemoteData.fromResult generalStakingInfo }, Cmd.none )
+
+        ShowMoneyDetails (Just token) ->
+            ( { model | modal = Just <| Model.MoneyDetail token }, Cmd.none )
+
+        ShowMoneyDetails Nothing ->
+            ( { model | modal = Nothing }, Cmd.none )
 
         ShowStakingForm False ->
             ( { model | modal = Nothing }, Cmd.none )
@@ -450,7 +457,7 @@ updateWithWalletAndStakingModal model updater =
         |> Maybe.Extra.unwrap ( model, Cmd.none )
             (\( modal, wallet ) ->
                 case modal of
-                    MoneyDetail ->
+                    MoneyDetail _ ->
                         ( model, Cmd.none )
 
                     FeeExplanation ->
@@ -475,7 +482,7 @@ updateWithWalletAndClaimModal model updater =
     Maybe.map3
         (\modal wallet _ ->
             case modal of
-                MoneyDetail ->
+                MoneyDetail _ ->
                     ( model, Cmd.none )
 
                 FeeExplanation ->
@@ -504,7 +511,7 @@ updateWithWalletAndWithdrawModal model updater =
     Maybe.map3
         (\modal wallet _ ->
             case modal of
-                MoneyDetail ->
+                MoneyDetail _ ->
                     ( model, Cmd.none )
 
                 FeeExplanation ->
@@ -533,7 +540,7 @@ updateWithWalletAndMigrationModal model updater =
     Maybe.map3
         (\modal wallet oldState ->
             case modal of
-                MoneyDetail ->
+                MoneyDetail _ ->
                     ( model, Cmd.none )
 
                 FeeExplanation ->
@@ -608,7 +615,7 @@ subscriptions { wallet, modal, visibility } =
             |> Maybe.Extra.unwrap Sub.none
                 (\justModal ->
                     case justModal of
-                        MoneyDetail ->
+                        MoneyDetail _ ->
                             Sub.none
 
                         FeeExplanation ->

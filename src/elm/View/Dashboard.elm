@@ -11,7 +11,6 @@ import Model.OldState
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, canStake)
 import RemoteData exposing (RemoteData(..))
-import Round
 import Svg exposing (defs, g, linearGradient, rect, stop, svg)
 import Svg.Attributes exposing (fill, fillRule, height, offset, stopColor, stroke, strokeWidth, transform, width, x, x1, x2, y, y1, y2)
 import Update exposing (Msg(..))
