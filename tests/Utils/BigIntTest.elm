@@ -1,8 +1,9 @@
-module Utils.BigIntTest exposing (fromBaseUnitTests, idempotence, toBaseUnitTests)
+module Utils.BigIntTest exposing (fromBaseUnitTests, idempotence, splitTests, toBaseUnitTests)
 
 import BigInt exposing (BigInt)
 import Expect
 import Fuzz
+import Model.Balance
 import Test exposing (Test, describe, fuzz, fuzz2, test)
 import Utils.BigInt exposing (fromBaseUnit, toBaseUnit)
 
@@ -70,6 +71,35 @@ toBaseUnitTests : Test
 toBaseUnitTests =
     describe "toBaseUnit" <|
         List.map toBaseUnitSimpleTestRunner simpleToBaseUnitCases
+
+
+splitTestCases : List ( ( String, String ), BigInt )
+splitTestCases =
+    [ ( ( "0", "0" ), BigInt.fromInt 0 )
+    , ( ( "1", "0" ), shiftXBy 1 18 )
+    , ( ( "123123", "0" ), shiftXBy 123123 18 )
+    , ( ( "10", "0" ), shiftXBy 10 18 )
+    , ( ( "100", "0" ), shiftXBy 100 18 )
+    , ( ( "0", "1" ), shiftXBy 1 17 )
+    , ( ( "0", "01" ), shiftXBy 1 16 )
+    , ( ( "0", "001" ), shiftXBy 1 15 )
+    , ( ( "0", "011" ), shiftXBy 1123 13 )
+    ]
+
+
+splitTestRunner : ( ( String, String ), BigInt ) -> Test
+splitTestRunner ( result, bigInt ) =
+    test (Debug.toString result) <|
+        \_ ->
+            Expect.equal result <|
+                Model.Balance.split 3 <|
+                    Model.Balance.fromBigInt bigInt
+
+
+splitTests : Test
+splitTests =
+    describe "split" <|
+        List.map splitTestRunner splitTestCases
 
 
 simpleToBaseUnitCases : List ( BigInt, String )

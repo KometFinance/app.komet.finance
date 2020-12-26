@@ -3,6 +3,7 @@ module Model.Balance exposing
     , Fees
     , decoder
     , encode
+    , fromBigInt
     , humanReadableBalance
     , isPositive
     , map
@@ -25,6 +26,11 @@ type Balance
 
 type alias Fees =
     Int
+
+
+fromBigInt : BigInt -> Balance
+fromBigInt =
+    Balance
 
 
 toBigInt : Balance -> BigInt
