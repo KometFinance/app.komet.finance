@@ -3,6 +3,7 @@ port module Ports exposing
     , claimRewards
     , connectMetamask
     , contractApprovalResponse
+    , copyToClipboard
     , depositResponse
     , novaSwap
     , poolReward
@@ -29,6 +30,9 @@ import Json.Decode
 import Json.Encode
 import Model.Balance exposing (Balance)
 import Utils.BigInt
+
+
+port copyToClipboard : String -> Cmd msg
 
 
 port connectMetamask : Bool -> Cmd msg

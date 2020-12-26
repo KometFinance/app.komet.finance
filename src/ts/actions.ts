@@ -245,6 +245,26 @@ const claimRewards = (app: any, web3: Web3, addresses: Addresses) => async (
   }
 }
 
+const copyToClipboard = (id: string) => {
+  const text = document.getElementById(id).textContent
+  writeText(text)
+}
+
+function writeText (str: string) {
+  return new Promise(function (resolve, reject) {
+    let success = false
+    function listener (e) {
+      e.clipboardData.setData('text/plain', str)
+      e.preventDefault()
+      success = true
+    }
+    document.addEventListener('copy', listener)
+    document.execCommand('copy')
+    document.removeEventListener('copy', listener)
+    success ? resolve() : reject(new Error('failure to copy the text'))
+  })
+}
+
 export const hook = (addresses: Addresses, web3: Web3, app: any) => {
   ports.connectMetamask(app)(connect(app, web3, addresses))
   ports.requestUserStakingInfo(app)(
@@ -263,6 +283,7 @@ export const hook = (addresses: Addresses, web3: Web3, app: any) => {
   )
   ports.exchangeNovaV1(app)(exchangeNovaV1(app, web3, addresses))
   ports.claimRewards(app)(claimRewards(app, web3, addresses))
+  ports.copyToClipboard(app)(copyToClipboard)
 
   // NOTE that should go in a better place but ...
   // let's listen to changes

@@ -21,7 +21,7 @@ export const setup = async () => {
   console.log('addresses -> ', addresses)
 
   const app = Elm.Main.init({
-    flags: images
+    flags: { images, addresses }
   })
 
   const prov: provider = (await detectEthereumProvider()) as provider

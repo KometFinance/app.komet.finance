@@ -15,8 +15,9 @@ import Model exposing (AmountInputForm, Images, Modal(..), Model, StakingFormSta
 import Model.Balance
 import Model.OldState exposing (MigrationState, MigrationStep(..), OldState)
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
-import Model.Wallet exposing (Wallet, WalletError)
+import Model.Wallet exposing (Token, Wallet, WalletError)
 import Ports
+import Process exposing (sleep)
 import RemoteData exposing (RemoteData(..))
 import Result.Extra
 import Task
@@ -28,11 +29,14 @@ import Utils.Json
 type Msg
     = NoOp
     | Connect
+    | CopyAddressToClickBoard
+    | RemoveFeedback
     | UpdateWallet (Result WalletError Wallet)
     | UpdateUserStakingInfo (Result StakingInfoError UserStakingInfo)
     | UpdateGeneralStakingInfo (Result StakingInfoError GeneralStakingInfo)
     | UpdateReward (Result StakingInfoError RewardInfo)
     | UpdateOldState (Result () OldState)
+    | ShowMoneyDetails (Maybe Token)
     | ShowStakingForm Bool
     | ShowFeeExplanation Bool
     | ShowWithdrawConfirmation Bool
@@ -55,12 +59,16 @@ type Msg
 
 
 type alias Flags =
-    Images
+    { images : Images
+    , addresses : Model.Wallet.Addresses
+    }
 
 
 init : Flags -> ( Model, Cmd Msg )
-init images =
+init { images, addresses } =
     ( { images = images
+      , addresses = addresses
+      , copyToClipboardFeedback = False
       , wallet = Loading
       , modal = Nothing
       , userStakingInfo = NotAsked
@@ -81,6 +89,19 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        CopyAddressToClickBoard ->
+            ( { model | copyToClipboardFeedback = True }
+            , Cmd.batch
+                [ Ports.copyToClipboard "contract-address"
+                , sleep 2000 |> Task.perform (\_ -> RemoveFeedback)
+                ]
+            )
+
+        RemoveFeedback ->
+            ( { model | copyToClipboardFeedback = False }
+            , Cmd.none
+            )
 
         VisibityChange visibility ->
             ( { model | visibility = visibility }, Cmd.none )
@@ -166,6 +187,12 @@ update msg model =
 
         UpdateGeneralStakingInfo generalStakingInfo ->
             ( { model | generalStakingInfo = RemoteData.fromResult generalStakingInfo }, Cmd.none )
+
+        ShowMoneyDetails (Just token) ->
+            ( { model | modal = Just <| Model.MoneyDetail token }, Cmd.none )
+
+        ShowMoneyDetails Nothing ->
+            ( { model | modal = Nothing }, Cmd.none )
 
         ShowStakingForm False ->
             ( { model | modal = Nothing }, Cmd.none )
@@ -450,7 +477,7 @@ updateWithWalletAndStakingModal model updater =
         |> Maybe.Extra.unwrap ( model, Cmd.none )
             (\( modal, wallet ) ->
                 case modal of
-                    MoneyDetail ->
+                    MoneyDetail _ ->
                         ( model, Cmd.none )
 
                     FeeExplanation ->
@@ -475,7 +502,7 @@ updateWithWalletAndClaimModal model updater =
     Maybe.map3
         (\modal wallet _ ->
             case modal of
-                MoneyDetail ->
+                MoneyDetail _ ->
                     ( model, Cmd.none )
 
                 FeeExplanation ->
@@ -504,7 +531,7 @@ updateWithWalletAndWithdrawModal model updater =
     Maybe.map3
         (\modal wallet _ ->
             case modal of
-                MoneyDetail ->
+                MoneyDetail _ ->
                     ( model, Cmd.none )
 
                 FeeExplanation ->
@@ -533,7 +560,7 @@ updateWithWalletAndMigrationModal model updater =
     Maybe.map3
         (\modal wallet oldState ->
             case modal of
-                MoneyDetail ->
+                MoneyDetail _ ->
                     ( model, Cmd.none )
 
                 FeeExplanation ->
@@ -608,7 +635,7 @@ subscriptions { wallet, modal, visibility } =
             |> Maybe.Extra.unwrap Sub.none
                 (\justModal ->
                     case justModal of
-                        MoneyDetail ->
+                        MoneyDetail _ ->
                             Sub.none
 
                         FeeExplanation ->

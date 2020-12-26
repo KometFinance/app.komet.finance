@@ -140,3 +140,9 @@ export const claimRewards = (app: any) => (
 ) => {
   app.ports.claimRewards.subscribe(onRequest)
 }
+
+export const copyToClipboard = (app: any) => (
+  onRequest: (id: string) => void
+) => {
+  app.ports.copyToClipboard.subscribe(onRequest)
+}

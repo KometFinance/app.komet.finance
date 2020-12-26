@@ -22,18 +22,21 @@ type alias Images =
     , logo : String
     , kometToken : String
     , ethToken : String
+    , novaToken : String
+    , lpToken : String
     , metamaskFox : String
     , medium : String
     , telegram : String
     , twitter : String
     , stakingGem : String
     , externalLink : String
+    , copyToClip : String
     }
 
 
 type Modal
     = -- for now that will only be for the LP token but who knows.
-      MoneyDetail
+      MoneyDetail Model.Wallet.Token
     | StakingDetail AmountInputForm
     | WithdrawDetail WithdrawInputForm
     | ConfirmRewardClaim (RemoteData () ())
@@ -80,6 +83,8 @@ defaultAmountInputForm =
 
 type alias Model =
     { images : Images
+    , addresses : Model.Wallet.Addresses
+    , copyToClipboardFeedback : Bool
     , wallet : RemoteData WalletError Wallet
     , modal : Maybe Modal
     , userStakingInfo : RemoteData StakingInfoError UserStakingInfo

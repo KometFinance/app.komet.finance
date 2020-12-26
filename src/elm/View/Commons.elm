@@ -35,8 +35,6 @@ modal { onClose, progress, content } =
         [ attribute "aria-labelledby" "connect"
         , attribute "aria-modal" "true"
         , class "modal fade show"
-        , attribute "data-backdrop" "static"
-        , attribute "data-keyboard" "false"
         , id "StackingModal"
         , attribute "role" "dialog"
         , attribute "style" "display: block;"

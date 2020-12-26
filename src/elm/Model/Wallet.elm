@@ -1,6 +1,9 @@
 module Model.Wallet exposing
-    ( Wallet
+    ( Addresses
+    , Token(..)
+    , Wallet
     , WalletError(..)
+    , allTokens
     , canStake
     , decoder
     )
@@ -20,6 +23,25 @@ type alias Wallet =
     , lpBalance : Balance
     , novaBalance : Balance
     }
+
+
+type Token
+    = Komet
+    | LP
+    | Eth
+    | Nova
+
+
+type alias Addresses =
+    { komet : String
+    , lp : String
+    , nova : String
+    }
+
+
+allTokens : List Token
+allTokens =
+    [ LP, Komet, Nova, Eth ]
 
 
 type WalletError

@@ -3,6 +3,7 @@ module Model.Balance exposing
     , Fees
     , decoder
     , encode
+    , fromBigInt
     , humanReadableBalance
     , isPositive
     , map
@@ -27,14 +28,19 @@ type alias Fees =
     Int
 
 
+fromBigInt : BigInt -> Balance
+fromBigInt =
+    Balance
+
+
 toBigInt : Balance -> BigInt
 toBigInt (Balance balance) =
     balance
 
 
 map : (BigInt -> BigInt) -> Balance -> Balance
-map fct (Balance balance) =
-    Balance <| fct balance
+map fct =
+    Balance << fct << toBigInt
 
 
 isPositive : Balance -> Bool
@@ -42,67 +48,29 @@ isPositive (Balance balance) =
     BigInt.gt balance (BigInt.fromInt 0)
 
 
-weiToFactor : Int -> Balance -> BigInt
-weiToFactor factor (Balance fullBalance) =
-    BigInt.div fullBalance (BigInt.pow (BigInt.fromInt 10) (BigInt.fromInt (18 - factor)))
-
-
-
--- TODO maybe a lot of these implementations should go in BigInt and just be defined here as map BigInt.stuff
-
-
 humanReadableBalance : Int -> Balance -> String
 humanReadableBalance precision =
-    split precision >> (\( unit, decimals ) -> unit ++ "." ++ decimals)
+    toBigInt >> Utils.BigInt.humanReadable precision
 
 
 split : Int -> Balance -> ( String, String )
 split precision =
-    weiToFactor precision
-        >> BigInt.toString
-        >> (\intStr ->
-                ( String.dropRight precision intStr
-                    |> (\unit ->
-                            if String.isEmpty unit then
-                                "0"
+    toBigInt
+        >> Utils.BigInt.toBaseUnitAndDecimals
+        >> (\( unit, decimals ) ->
+                ( unit
+                , if String.isEmpty decimals then
+                    "0"
 
-                            else
-                                unit
-                       )
-                , String.right precision intStr
+                  else
+                    String.left precision decimals
                 )
            )
 
 
-percentOf : Balance -> Balance -> Maybe Float
-percentOf balance1 balance2 =
-    let
-        baseUnitAmount1 =
-            weiToFactor 18 balance1
-
-        baseUnitAmount2 =
-            weiToFactor 18 balance2
-
-        maybeAmount1 =
-            Utils.BigInt.toInt baseUnitAmount1
-
-        maybeAmount2 =
-            Utils.BigInt.toInt baseUnitAmount2
-    in
-    maybeAmount2
-        |> Maybe.andThen
-            (\amount2 ->
-                if amount2 == 0 then
-                    Nothing
-
-                else
-                    Just amount2
-            )
-        |> Maybe.map2
-            (\amount1 amount2 ->
-                toFloat amount1 * 100 / toFloat amount2
-            )
-            maybeAmount1
+percentOf : Int -> Balance -> Balance -> Maybe String
+percentOf precision (Balance balance1) (Balance balance2) =
+    Utils.BigInt.percentOf precision balance1 balance2
 
 
 minusFees : Fees -> Balance -> Balance

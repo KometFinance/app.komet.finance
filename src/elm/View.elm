@@ -1,14 +1,14 @@
 module View exposing (view)
 
 import Browser exposing (Document)
-import Html exposing (Html, a, br, button, div, footer, h1, h3, h4, i, img, li, nav, p, small, span, text, ul)
-import Html.Attributes exposing (alt, attribute, class, disabled, href, id, src, style, target, type_, width)
+import Html exposing (Html, a, br, button, div, footer, h1, h3, h4, i, img, li, nav, p, small, span, strong, text, ul)
+import Html.Attributes exposing (alt, attribute, class, classList, disabled, href, id, src, style, target, title, type_, value, width)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
 import Model exposing (Images, Model, StakingFormStage(..))
-import Model.Balance exposing (Balance, humanReadableBalance)
+import Model.Balance exposing (humanReadableBalance)
 import Model.OldState exposing (MigrationState, MigrationStep(..), OldState)
-import Model.Wallet exposing (Wallet, WalletError(..))
+import Model.Wallet exposing (Addresses, Token, Wallet, WalletError(..))
 import RemoteData exposing (RemoteData(..))
 import Update exposing (Msg(..))
 import View.AmountForm exposing (confirmRewardClaimModal, stakingModal, withdrawModal)
@@ -67,11 +67,19 @@ view ({ wallet, oldState, userStakingInfo, rewardInfo, images, modal } as model)
                         |> viewMaybe
                             (\justModal ->
                                 case justModal of
-                                    Model.MoneyDetail ->
-                                        div []
-                                            [ Html.Extra.nothing
-                                            , div [ class "modal-backdrop fade show" ] []
-                                            ]
+                                    Model.MoneyDetail token ->
+                                        RemoteData.unwrap Html.Extra.nothing
+                                            (\wallet_ ->
+                                                div []
+                                                    [ coinModal model.images model.addresses model.copyToClipboardFeedback wallet_ token
+                                                    , div
+                                                        [ class "modal-backdrop fade show"
+                                                        , onClick <| Update.ShowMoneyDetails Nothing
+                                                        ]
+                                                        []
+                                                    ]
+                                            )
+                                            wallet
 
                                     Model.StakingDetail stakingForm ->
                                         RemoteData.unwrap Html.Extra.nothing
@@ -186,11 +194,11 @@ feeExplanationModal =
         }
 
 
-header : Model -> Html.Html msg
+header : Model -> Html.Html Msg
 header { images, wallet } =
     nav [ id "AppTopbar", class "pb-3 bg_darknav" ]
         [ div [ class "flex justify-end" ]
-            [ a [ class "mr-auto navbar-brand", href "#" ]
+            [ a [ class "mr-auto navbar-brand", href "https://komet.finance" ]
                 [ img [ src images.appLogo, width 30, class "align-top d-inline-block", alt "Komet logo", attribute "loading" "lazy" ] []
                 , span [ class "sr-only" ] [ text "Komet" ]
                 ]
@@ -217,24 +225,33 @@ viewAddress images { address } =
         ]
 
 
-walletOverview : Wallet -> Html msg
-walletOverview { lpBalance, ethBalance, kometBalance, novaBalance } =
+walletOverview : Wallet -> Html Msg
+walletOverview wallet =
     ul [ class "mb-0 mr-2 list-inline list-unstyled align-items-center d-flex" ] <|
-        List.map coinPull
-            [ ( "lp", lpBalance, "LP" )
-            , ( "komet", kometBalance, "KOMET" )
-            , ( "nova", novaBalance, "NOVA" )
-            , ( "eth", ethBalance, "ETH" )
-            ]
+        List.map (coinPill wallet) Model.Wallet.allTokens
 
 
-coinPull : ( String, Balance, String ) -> Html msg
-coinPull ( badgeSuffix, balance, moneyTag ) =
+coinPill : Wallet -> Token -> Html Msg
+coinPill wallet token =
+    let
+        ( badgeSuffix, balance, moneyTag ) =
+            case token of
+                Model.Wallet.Komet ->
+                    ( "komet", wallet.kometBalance, "KOMET" )
+
+                Model.Wallet.LP ->
+                    ( "lp", wallet.lpBalance, "LP" )
+
+                Model.Wallet.Nova ->
+                    ( "nova", wallet.novaBalance, "NOVA" )
+
+                Model.Wallet.Eth ->
+                    ( "eth", wallet.ethBalance, "ETH" )
+    in
     li [ class "list-inline-item" ]
         [ button
             [ class "btn btn-sm btn-dark d-flex align-items-center"
-
-            -- TODO replace that with a proper modal stuff
+            , onClick <| Update.ShowMoneyDetails <| Just token
             , type_ "button"
             ]
             [ span [ class <| "mr-2 badge badge-" ++ badgeSuffix ]
@@ -360,7 +377,6 @@ migrationModal { oldNova, oldStaking } ({ currentStep } as state) =
                                 StartMigration
 
                             Done ->
-                                -- TODO check for retry
                                 ShowMigrationPanel False
 
                             _ ->
@@ -407,3 +423,129 @@ viewStep ( name, state ) =
             [ text name
             ]
         ]
+
+
+coinModal : Images -> Addresses -> Bool -> Wallet -> Model.Wallet.Token -> Html Msg
+coinModal images addresses showFeedback wallet token =
+    View.Commons.modal
+        { onClose = Just <| Update.ShowMoneyDetails Nothing
+        , progress = 0
+        , content =
+            div [ class "flex flex-col items-center bg-white modal-body" ]
+                [ img
+                    ([ class "mb-4 img-fluid", width 100 ]
+                        ++ (case token of
+                                Model.Wallet.Komet ->
+                                    [ alt "KOMET token", src images.kometToken ]
+
+                                Model.Wallet.LP ->
+                                    [ alt "KOMET/ETH LP", src images.lpToken ]
+
+                                Model.Wallet.Eth ->
+                                    [ alt "ETH", src images.ethToken ]
+
+                                Model.Wallet.Nova ->
+                                    [ alt "NOVA token", src images.novaToken ]
+                           )
+                    )
+                    []
+                , h3 [ class "mb-4 text-center text-dark text-uppercase" ]
+                    [ case token of
+                        Model.Wallet.Komet ->
+                            text "KOMET"
+
+                        Model.Wallet.LP ->
+                            text "KOMET/ETH LP"
+
+                        Model.Wallet.Eth ->
+                            text "ETH"
+
+                        Model.Wallet.Nova ->
+                            text "NOVA"
+                    ]
+                , ul [ class "w-full list-group text-dark" ] <|
+                    [ li [ class "list-group-item d-flex justify-content-between align-items-center" ]
+                        [ text "Your balance"
+                        , div [ class "text-align-end d-flex flex-column" ]
+                            [ strong []
+                                [ text <|
+                                    Model.Balance.humanReadableBalance 6 <|
+                                        case token of
+                                            Model.Wallet.Komet ->
+                                                wallet.kometBalance
+
+                                            Model.Wallet.LP ->
+                                                wallet.lpBalance
+
+                                            Model.Wallet.Eth ->
+                                                wallet.ethBalance
+
+                                            Model.Wallet.Nova ->
+                                                wallet.novaBalance
+                                ]
+
+                            -- TODO find an API to get the dollar value
+                            -- , small [ class "text-right text-black-50" ]
+                            -- [ text "($ 840.98)" ]
+                            ]
+                        ]
+                    ]
+                        ++ (let
+                                detailRows : String -> List (Html Msg)
+                                detailRows address =
+                                    [ li [ class "list-group-item d-flex justify-content-between align-items-center" ]
+                                        [ text "Contract                                "
+                                        , span
+                                            [ class "badge badge-primary badge-pill"
+                                            , id "contract-address"
+                                            , value address
+                                            ]
+                                            [ text address ]
+                                        ]
+                                    , li [ class "list-group-item d-flex justify-content-between align-items-center" ]
+                                        [ a
+                                            [ class "flex flex-row items-center mr-auto space-x-2 text-dark hover:no-underline"
+                                            , title "Placeholder link title"
+                                            , onClick CopyAddressToClickBoard
+                                            ]
+                                            [ img [ src images.copyToClip ] []
+                                            , span [ class "no-underline" ]
+                                                [ text "Copy address"
+                                                ]
+                                            , span
+                                                [ class "no-underline hover:no-underline transition-colors ease-out duration-300"
+                                                , classList
+                                                    [ ( "text-black", showFeedback )
+                                                    , ( "text-white", not showFeedback )
+                                                    ]
+                                                ]
+                                                [ text "✓" ]
+                                            ]
+                                        , a
+                                            [ class "flex flex-row items-center ml-auto text-dark space-x-2 "
+                                            , href <| "https://etherscan.io/token/" ++ address
+                                            , target "blank_"
+                                            ]
+                                            [ img [ src images.externalLink ] []
+                                            , span []
+                                                [ text "View on Etherscan"
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                            in
+                            case token of
+                                Model.Wallet.Eth ->
+                                    []
+
+                                Model.Wallet.Komet ->
+                                    detailRows addresses.komet
+
+                                Model.Wallet.LP ->
+                                    detailRows addresses.lp
+
+                                Model.Wallet.Nova ->
+                                    detailRows addresses.nova
+                           )
+                ]
+        }
