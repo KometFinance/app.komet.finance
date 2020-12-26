@@ -1,5 +1,6 @@
 module Model.Wallet exposing
-    ( Token(..)
+    ( Addresses
+    , Token(..)
     , Wallet
     , WalletError(..)
     , allTokens
@@ -29,6 +30,13 @@ type Token
     | LP
     | Eth
     | Nova
+
+
+type alias Addresses =
+    { komet : String
+    , lp : String
+    , nova : String
+    }
 
 
 allTokens : List Token

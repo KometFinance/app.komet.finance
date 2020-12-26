@@ -2,13 +2,13 @@ module View exposing (view)
 
 import Browser exposing (Document)
 import Html exposing (Html, a, br, button, div, footer, h1, h3, h4, i, img, li, nav, p, small, span, strong, text, ul)
-import Html.Attributes exposing (alt, attribute, class, disabled, href, id, src, style, target, title, type_, value, width)
+import Html.Attributes exposing (alt, attribute, class, classList, disabled, href, id, src, style, target, title, type_, value, width)
 import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
 import Model exposing (Images, Model, StakingFormStage(..))
-import Model.Balance exposing (Balance, humanReadableBalance)
+import Model.Balance exposing (humanReadableBalance)
 import Model.OldState exposing (MigrationState, MigrationStep(..), OldState)
-import Model.Wallet exposing (Token, Wallet, WalletError(..))
+import Model.Wallet exposing (Addresses, Token, Wallet, WalletError(..))
 import RemoteData exposing (RemoteData(..))
 import Update exposing (Msg(..))
 import View.AmountForm exposing (confirmRewardClaimModal, stakingModal, withdrawModal)
@@ -71,7 +71,7 @@ view ({ wallet, oldState, userStakingInfo, rewardInfo, images, modal } as model)
                                         RemoteData.unwrap Html.Extra.nothing
                                             (\wallet_ ->
                                                 div []
-                                                    [ coinModal model.images wallet_ token
+                                                    [ coinModal model.images model.addresses model.copyToClipboardFeedback wallet_ token
                                                     , div
                                                         [ class "modal-backdrop fade show"
                                                         , onClick <| Update.ShowMoneyDetails Nothing
@@ -425,8 +425,8 @@ viewStep ( name, state ) =
         ]
 
 
-coinModal : Images -> Wallet -> Model.Wallet.Token -> Html Msg
-coinModal images wallet token =
+coinModal : Images -> Addresses -> Bool -> Wallet -> Model.Wallet.Token -> Html Msg
+coinModal images addresses showFeedback wallet token =
     View.Commons.modal
         { onClose = Just <| Update.ShowMoneyDetails Nothing
         , progress = 0
@@ -463,7 +463,7 @@ coinModal images wallet token =
                         Model.Wallet.Nova ->
                             text "NOVA"
                     ]
-                , ul [ class "w-full list-group text-dark" ]
+                , ul [ class "w-full list-group text-dark" ] <|
                     [ li [ class "list-group-item d-flex justify-content-between align-items-center" ]
                         [ text "Your balance"
                         , div [ class "text-align-end d-flex flex-column" ]
@@ -489,23 +489,63 @@ coinModal images wallet token =
                             -- [ text "($ 840.98)" ]
                             ]
                         ]
-                    , li [ class "list-group-item d-flex justify-content-between align-items-center" ]
-                        [ text "Contract                                "
-                        , span [ class "badge badge-primary badge-pill", id "contract-address", value "0x6cfb6df56bbdb00226aeffcdb2cd1fe8da1abda7" ]
-                            [ text "0x6cfb6df56bbdb00226aeffcdb2cd1fe8da1abda7" ]
-                        ]
-                    , li [ class "list-group-item d-flex justify-content-between align-items-center" ]
-                        [ a [ class "mr-auto text-dark", attribute "onclick" "copyToClip()", title "Placeholder link title" ]
-                            [ img [ src images.copyToClip ] []
-                            , text "Copy address"
-                            , span [ id "copied", attribute "style" "display: none;" ]
-                                [ text "✓" ]
-                            ]
-                        , a [ class "ml-auto text-dark", href "https://etherscan.io/token/0x6cfb6df56bbdb00226aeffcdb2cd1fe8da1abda7?a", title "Placeholder link title" ]
-                            [ img [ src images.externalLink ] []
-                            , text "View on Etherscan"
-                            ]
-                        ]
                     ]
+                        ++ (let
+                                detailRows : String -> List (Html Msg)
+                                detailRows address =
+                                    [ li [ class "list-group-item d-flex justify-content-between align-items-center" ]
+                                        [ text "Contract                                "
+                                        , span
+                                            [ class "badge badge-primary badge-pill"
+                                            , id "contract-address"
+                                            , value address
+                                            ]
+                                            [ text address ]
+                                        ]
+                                    , li [ class "list-group-item d-flex justify-content-between align-items-center" ]
+                                        [ a
+                                            [ class "flex flex-row items-center mr-auto space-x-2 text-dark hover:no-underline"
+                                            , title "Placeholder link title"
+                                            , onClick CopyAddressToClickBoard
+                                            ]
+                                            [ img [ src images.copyToClip ] []
+                                            , span [ class "no-underline" ]
+                                                [ text "Copy address"
+                                                ]
+                                            , span
+                                                [ class "no-underline hover:no-underline transition-colors ease-out duration-300"
+                                                , classList
+                                                    [ ( "text-black", showFeedback )
+                                                    , ( "text-white", not showFeedback )
+                                                    ]
+                                                ]
+                                                [ text "✓" ]
+                                            ]
+                                        , a
+                                            [ class "flex flex-row items-center ml-auto text-dark space-x-2 "
+                                            , href <| "https://etherscan.io/token/" ++ address
+                                            , target "blank_"
+                                            ]
+                                            [ img [ src images.externalLink ] []
+                                            , span []
+                                                [ text "View on Etherscan"
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                            in
+                            case token of
+                                Model.Wallet.Eth ->
+                                    []
+
+                                Model.Wallet.Komet ->
+                                    detailRows addresses.komet
+
+                                Model.Wallet.LP ->
+                                    detailRows addresses.lp
+
+                                Model.Wallet.Nova ->
+                                    detailRows addresses.nova
+                           )
                 ]
         }

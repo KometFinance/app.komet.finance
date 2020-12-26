@@ -17,6 +17,7 @@ import Model.OldState exposing (MigrationState, MigrationStep(..), OldState)
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Token, Wallet, WalletError)
 import Ports
+import Process exposing (sleep)
 import RemoteData exposing (RemoteData(..))
 import Result.Extra
 import Task
@@ -28,6 +29,8 @@ import Utils.Json
 type Msg
     = NoOp
     | Connect
+    | CopyAddressToClickBoard
+    | RemoveFeedback
     | UpdateWallet (Result WalletError Wallet)
     | UpdateUserStakingInfo (Result StakingInfoError UserStakingInfo)
     | UpdateGeneralStakingInfo (Result StakingInfoError GeneralStakingInfo)
@@ -56,12 +59,16 @@ type Msg
 
 
 type alias Flags =
-    Images
+    { images : Images
+    , addresses : Model.Wallet.Addresses
+    }
 
 
 init : Flags -> ( Model, Cmd Msg )
-init images =
+init { images, addresses } =
     ( { images = images
+      , addresses = addresses
+      , copyToClipboardFeedback = False
       , wallet = Loading
       , modal = Nothing
       , userStakingInfo = NotAsked
@@ -82,6 +89,19 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        CopyAddressToClickBoard ->
+            ( { model | copyToClipboardFeedback = True }
+            , Cmd.batch
+                [ Ports.copyToClipboard "contract-address"
+                , sleep 2000 |> Task.perform (\_ -> RemoveFeedback)
+                ]
+            )
+
+        RemoveFeedback ->
+            ( { model | copyToClipboardFeedback = False }
+            , Cmd.none
+            )
 
         VisibityChange visibility ->
             ( { model | visibility = visibility }, Cmd.none )

@@ -83,6 +83,8 @@ defaultAmountInputForm =
 
 type alias Model =
     { images : Images
+    , addresses : Model.Wallet.Addresses
+    , copyToClipboardFeedback : Bool
     , wallet : RemoteData WalletError Wallet
     , modal : Maybe Modal
     , userStakingInfo : RemoteData StakingInfoError UserStakingInfo
