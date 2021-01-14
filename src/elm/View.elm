@@ -431,7 +431,7 @@ coinModal images addresses showFeedback wallet token =
         { onClose = Just <| Update.ShowMoneyDetails Nothing
         , progress = 0
         , content =
-            div [ class "flex flex-col items-center bg-white modal-body" ]
+            div [ class "flex flex-col items-center bg-white rounded-xl modal-body" ]
                 [ img
                     ([ class "mb-4 img-fluid", width 100 ]
                         ++ (case token of
@@ -494,7 +494,7 @@ coinModal images addresses showFeedback wallet token =
                                 detailRows : String -> List (Html Msg)
                                 detailRows address =
                                     [ li [ class "list-group-item d-flex justify-content-between align-items-center" ]
-                                        [ text "Contract                                "
+                                        [ text "Contract"
                                         , span
                                             [ class "badge badge-primary badge-pill"
                                             , id "contract-address"
@@ -504,8 +504,8 @@ coinModal images addresses showFeedback wallet token =
                                         ]
                                     , li [ class "list-group-item d-flex justify-content-between align-items-center" ]
                                         [ a
-                                            [ class "flex flex-row items-center mr-auto space-x-2 text-dark hover:no-underline"
-                                            , title "Placeholder link title"
+                                            [ class "flex flex-row items-center mr-auto cursor-pointer space-x-2 text-dark hover:no-underline"
+                                            , title "Copy address to clipboard"
                                             , onClick CopyAddressToClickBoard
                                             ]
                                             [ img [ src images.copyToClip ] []
