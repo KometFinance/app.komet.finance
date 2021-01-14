@@ -508,7 +508,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                             [ text "30%"
                             ]
                         , span [ class "text-danger" ]
-                            [ text <| "(reset: +" ++ String.fromInt (fees - 30) ++ "%)" ]
+                            [ text <| "(reset: +" ++ String.fromInt (30 - fees) ++ "%)" ]
                         ]
             ]
         ]
