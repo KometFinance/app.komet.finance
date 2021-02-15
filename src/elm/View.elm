@@ -202,6 +202,7 @@ header { images, wallet } =
                 [ img [ src images.appLogo, width 30, class "align-top d-inline-block", alt "Komet logo", attribute "loading" "lazy" ] []
                 , span [ class "sr-only" ] [ text "Komet" ]
                 ]
+            , a [ class "nav-link text-primary", target "blank_", href "https://doc.komet.finance" ] [ text "Documentation" ]
             , wallet
                 |> RemoteData.toMaybe
                 |> viewMaybe (viewAddress images)
@@ -215,7 +216,7 @@ header { images, wallet } =
 
 viewAddress : Images -> Wallet -> Html msg
 viewAddress images { address } =
-    div [ class "ml-auto mr-4 card" ]
+    div [ class "mr-4 card" ]
         [ div [ class "py-1 align-items-center card-body d-flex" ]
             [ img [ alt "Metamask Fox Icon", class "mr-2", src images.metamaskFox, attribute "width" "26" ]
                 []
@@ -275,7 +276,8 @@ appFooter images =
             [ div [ class "bottombar col-12" ]
                 []
             , nav [ class "col-12 navbar navbar-expand-lg navbar-light" ]
-                [ div [ class "ml-auto" ]
+                [ a [ class "navbar-brand" ] [ img [ class "align-top d-inline-block", src images.logo ] [] ]
+                , div [ class "ml-auto" ]
                     [ ul [ class "list-inline" ]
                         [ li [ class "mr-0 list-inline-item" ]
                             [ a [ class "nav-link text-primary", href "https://financekomet.medium.com", target "_blank" ]
@@ -290,7 +292,7 @@ appFooter images =
                                 [ img [ src images.telegram, attribute "width" "26" ]
                                     []
                                 , span [ class "sr-only" ]
-                                    [ text "Télégram" ]
+                                    [ text "Telegram" ]
                                 ]
                             ]
                         , li [ class "mr-0 list-inline-item" ]
