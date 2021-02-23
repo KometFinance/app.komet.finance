@@ -1,8 +1,12 @@
 module Model.Balance exposing
     ( Balance
     , Fees
+    , Underflow(..)
     , decoder
     , encode
+    , feeDecoder
+    , feesToInt
+    , feesToString
     , fromBigInt
     , humanReadableBalance
     , isPositive
@@ -11,12 +15,15 @@ module Model.Balance exposing
     , percentOf
     , split
     , toBigInt
+    , underflowFeeLevel
     )
 
 import BigInt exposing (BigInt)
 import Json.Decode exposing (Decoder)
+import Json.Decode.Extra
 import Json.Encode
 import Maybe.Extra
+import Result.Extra
 import Utils.BigInt
 
 
@@ -24,8 +31,27 @@ type Balance
     = Balance BigInt
 
 
+type Underflow
+    = Underflow
+
+
 type alias Fees =
-    Int
+    Result Underflow Int
+
+
+underflowFeeLevel : Int
+underflowFeeLevel =
+    1
+
+
+feesToInt : Fees -> Int
+feesToInt =
+    Result.withDefault underflowFeeLevel
+
+
+feesToString : Fees -> String
+feesToString =
+    Result.Extra.unwrap "🐛*\u{00A0}" String.fromInt
 
 
 fromBigInt : BigInt -> Balance
@@ -78,7 +104,7 @@ minusFees fees (Balance number) =
     let
         taxes =
             number
-                |> BigInt.mul (BigInt.fromInt fees)
+                |> BigInt.mul (BigInt.fromInt <| Result.withDefault underflowFeeLevel fees)
                 |> (\num ->
                         BigInt.div num (BigInt.fromInt 100)
                    )
@@ -99,3 +125,16 @@ decoder =
                 >> Maybe.Extra.unwrap (Json.Decode.fail "not a bigInt") Json.Decode.succeed
             )
         |> Json.Decode.map Balance
+
+
+feeDecoder : Decoder Fees
+feeDecoder =
+    Json.Decode.Extra.parseInt
+        |> Json.Decode.map
+            (\int ->
+                if int > 35 then
+                    Err Underflow
+
+                else
+                    Ok int
+            )

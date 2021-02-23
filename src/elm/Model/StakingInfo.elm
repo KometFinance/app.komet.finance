@@ -94,5 +94,5 @@ decoderReward =
     Json.Decode.field "ok"
         (Json.Decode.succeed RewardInfo
             |> required "pending" Model.Balance.decoder
-            |> required "fees" Json.Decode.Extra.parseInt
+            |> required "fees" Model.Balance.feeDecoder
         )

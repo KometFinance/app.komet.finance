@@ -17,7 +17,7 @@ import Model.Wallet exposing (Wallet)
 import RemoteData exposing (RemoteData(..))
 import Update exposing (Msg(..))
 import Utils.BigInt
-import View.Commons
+import View.Commons exposing (bugAlert, bugWarning)
 
 
 confirmRewardClaimModal : RemoteData () () -> UserStakingInfo -> RewardInfo -> Html Msg
@@ -60,19 +60,23 @@ confirmRewardClaimModal request userStakingInfo rewardInfo =
                         [ text "Pending NOVA" ]
                     ]
                 , costBreakdown userStakingInfo rewardInfo (BigInt.fromInt 0) Claim
-                , button
-                    [ class "flex flex-row items-center justify-center mt-5 mb-0 btn btn-block btn-primary space-x-4"
-                    , disabled <| isLoading
-                    , onClick RewardClaim
-                    ]
-                  <|
-                    if isLoading then
-                        [ span [ class "spinner-border" ] []
-                        , span [] [ text "Claiming ..." ]
+                , div [ class "flex -mt-20 flex-column space-y-2" ]
+                    [ Html.Extra.viewIf (rewardInfo.fees == Err Model.Balance.Underflow) <|
+                        View.Commons.bugAlert
+                    , button
+                        [ class "flex flex-row items-center justify-center mt-5 mb-0 btn btn-block btn-primary space-x-4"
+                        , disabled <| isLoading || rewardInfo.fees == Err Model.Balance.Underflow
+                        , onClick RewardClaim
                         ]
+                      <|
+                        if isLoading then
+                            [ span [ class "spinner-border" ] []
+                            , span [] [ text "Claiming ..." ]
+                            ]
 
-                    else
-                        [ text "Start" ]
+                        else
+                            [ text "Start" ]
+                    ]
                 , if isLoading then
                     wankyLoader
 
@@ -292,6 +296,12 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                         | amountInput = str
                         , amount = maybeAmount str |> Maybe.withDefault (BigInt.fromInt 0)
                     }
+
+        hasFeeIssue : Bool
+        hasFeeIssue =
+            maybeStakingAndRewards
+                |> Maybe.Extra.unwrap False
+                    (Tuple.second >> .fees >> (==) (Err Model.Balance.Underflow))
     in
     div [ class "p-5 card-body" ]
         [ h3 [ class "text-center card-title" ]
@@ -382,9 +392,13 @@ viewInput config ({ amountInput, request } as inputForm) maybeStakingAndRewards 
                                         Claim ->
                                             []
                         )
+                , Html.Extra.viewIf (hasFeeIssue && config.move == Withdrawal)
+                    bugAlert
+                , Html.Extra.viewIf (config.move == Deposit)
+                    bugWarning
                 , button
                     [ class "flex flex-row items-center justify-center mt-5 mb-0 btn btn-block btn-primary space-x-4"
-                    , disabled <| isLoading && not isValid
+                    , disabled <| isLoading || not isValid || hasFeeIssue
                     , classList
                         [ ( "disabled", not isValid )
                         ]
@@ -481,7 +495,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                 , span [ class "text-secondary" ] [ text "NOVA" ]
                 , div [ class "text-secondary" ]
                     [ text "(including "
-                    , span [ class "text-secondary" ] [ text <| String.fromInt fees ]
+                    , span [ class "text-secondary" ] [ text <| Model.Balance.feesToString fees ]
                     , span [] [ text "% fees)" ]
                     ]
                 ]
@@ -491,14 +505,14 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                 case move of
                     Deposit ->
                         [ span [ class "text-info" ]
-                            [ text <| String.fromInt fees ++ "%"
+                            [ text <| Model.Balance.feesToString fees ++ "%"
                             ]
                         , span [ class "text-success" ] [ text "(No changes!)" ]
                         ]
 
                     Claim ->
                         [ span [ class "text-info" ]
-                            [ text <| String.fromInt fees ++ "%"
+                            [ text <| Model.Balance.feesToString fees ++ "%"
                             ]
                         , span [ class "text-success" ] [ text "(No changes!)" ]
                         ]
@@ -508,7 +522,7 @@ costBreakdown userStakingInfo { reward, fees } amount move =
                             [ text "30%"
                             ]
                         , span [ class "text-danger" ]
-                            [ text <| "(reset: +" ++ String.fromInt (30 - fees) ++ "%)" ]
+                            [ text <| "(reset: +" ++ String.fromInt (30 - Model.Balance.feesToInt fees) ++ "%)" ]
                         ]
             ]
         ]
