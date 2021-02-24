@@ -6,7 +6,7 @@ import Html.Events exposing (onClick)
 import Html.Extra exposing (viewMaybe)
 import Maybe.Extra
 import Model exposing (Images, Model)
-import Model.Balance exposing (split)
+import Model.Balance exposing (Fees, Underflow(..), split)
 import Model.OldState
 import Model.StakingInfo exposing (GeneralStakingInfo, RewardInfo, StakingInfoError, UserStakingInfo, isStaking)
 import Model.Wallet exposing (Wallet, canStake)
@@ -241,12 +241,12 @@ viewStakingInfo remoteStakingInfo remoteGeneralStakingInfo =
         ]
 
 
-feeSlider : Int -> Html Msg
+feeSlider : Fees -> Html Msg
 feeSlider fees =
     let
         percentFees : Float
         percentFees =
-            min 98.0 (100 - ((toFloat <| (fees - 1) * 100) / 29))
+            min 98.0 (100 - ((toFloat <| (Model.Balance.feesToInt fees - 1) * 100) / 29))
     in
     svg
         [ height "20px"
@@ -315,12 +315,29 @@ viewFidelity remoteRewardInfo =
                     (\{ fees } ->
                         div [ class "my-8" ]
                             [ h6 []
-                                [ text <| String.fromInt fees ++ "% withdraw fees" ]
+                                [ text <| Model.Balance.feesToString fees ++ "% withdraw fees" ]
                             , feeSlider fees
                             , small [ class "text-muted" ]
                                 [ text "Current withdraw fees on your NOVA reward" ]
                             ]
                     )
+            , Html.Extra.viewIf (RemoteData.unwrap False (.fees >> (==) (Err Underflow)) remoteRewardInfo) <|
+                View.Commons.bugAlert
+            , Html.Extra.viewIf
+                (remoteRewardInfo
+                    |> RemoteData.unwrap Nothing (.fees >> Result.toMaybe)
+                    |> Maybe.Extra.unwrap False ((<=) 3)
+                )
+              <|
+                div [ class "mt-16 alert alert-warning", attribute "role" "alert" ]
+                    [ h5 [ class "mb-0 mr-3 alert-heading" ]
+                        [ text "⚠ Consider withdrawing some LP soon ⚠" ]
+                    , p [ class "text-justify" ]
+                        [ text "Due to a bug in our smart-contract., your rewards might soon get stuck. We are preparing a transition to a new version of NOVA, and we will offer a migration and compensations if your NOVAs are stuck. If you would rather use your NOVA before that migration occurs, then we suggest you to withdraw some of your staked LP to reset the fees before they reach 0. To read more about this issue and our migration plan, "
+                        , a [ href "", class "text-black" ] [ text "have a look at this article" ]
+                        , text "."
+                        ]
+                    ]
             , div [ class "p-4 text-left card text-muted space-y-8" ]
                 [ p [ class "text-justify" ]
                     [ text "Fees only apply to withdrawing the NOVA you get as a reward for staking. "

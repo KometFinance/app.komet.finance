@@ -1,11 +1,13 @@
 module View.Commons exposing
-    ( defaultError
+    ( bugAlert
+    , bugWarning
+    , defaultError
     , defaultLoader
     , modal
     )
 
-import Html exposing (Html, button, div, span, text)
-import Html.Attributes exposing (attribute, class, disabled, id, type_)
+import Html exposing (Html, a, button, div, h5, p, span, text)
+import Html.Attributes exposing (attribute, class, disabled, href, id, target, type_)
 import Html.Attributes.Extra exposing (role)
 import Html.Events exposing (onClick)
 import Maybe.Extra
@@ -74,5 +76,31 @@ modal { onClose, progress, content } =
                         ]
                     ]
                 ]
+            ]
+        ]
+
+
+bugAlert : Html msg
+bugAlert =
+    div [ class "mt-16 alert alert-danger", attribute "role" "alert" ]
+        [ h5 [ class "mb-0 mr-3 alert-heading" ]
+            [ text "Woops, we have an issue" ]
+        , p [ class "text-justify" ]
+            [ text "Due to an issue in our smart contract, if you stake without withdrawing LP for more than 60 days the fees are broken, and you can no longer claim your NOVAs. We are aware of this issue and if you end up stuck please bear with us for a bit longer. We are working on the next version of NOVA and you will get compensated for your wait. For more details, "
+            , a [ href "https://kometcapital.medium.com/concerning-the-fee-issue-on-nova-714efe1139e0", target "blank_", class "text-black" ] [ text "check this article" ]
+            , text "."
+            ]
+        ]
+
+
+bugWarning : Html msg
+bugWarning =
+    div [ class "mt-16 alert alert-warning", attribute "role" "alert" ]
+        [ h5 [ class "mb-0 mr-3 alert-heading" ]
+            [ text "Beware, we have an issue" ]
+        , p [ class "text-justify" ]
+            [ text "Due to an error in our smart contract, if you stake for longer than 60 days your rewards will temporarily get stuck in the contract. We are aware of the issue and will provide you with a simple migration tool. You can read more about this issue "
+            , a [ href "https://kometcapital.medium.com/concerning-the-fee-issue-on-nova-714efe1139e0", target "blank_", class "text-black" ] [ text "here" ]
+            , text "."
             ]
         ]
