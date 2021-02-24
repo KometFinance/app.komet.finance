@@ -94,11 +94,22 @@ jobs:
         MU1: ${{ secrets.MU1 }}
         NOVA_MIG: ${{ secrets.NOVA_MIG }}
 
-    - name: Deploy
+    - name: Deploy to prod
+      if: github.ref == 'refs/heads/main'
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         allow_empty_commit: true
         publish_dir: ./dist
         cname: app.komet.finance
+
+    - name: Deploy to new prod
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        deploy_key: ${{ secrets.DEPLOY_KEY_SECRET }}
+        allow_empty_commit: true
+        publish_dir: ./dist
+        external_repository: kometfinance/app.komet.capital
+        cname: app.komet.capital
 
