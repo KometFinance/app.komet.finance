@@ -198,11 +198,11 @@ header : Model -> Html.Html Msg
 header { images, wallet } =
     nav [ id "AppTopbar", class "pb-3 bg_darknav" ]
         [ div [ class "flex justify-end" ]
-            [ a [ class "mr-auto navbar-brand", href "https://komet.finance" ]
+            [ a [ class "mr-auto navbar-brand", href "https://komet.capital" ]
                 [ img [ src images.appLogo, width 30, class "align-top d-inline-block", alt "Komet logo", attribute "loading" "lazy" ] []
                 , span [ class "sr-only" ] [ text "Komet" ]
                 ]
-            , a [ class "nav-link text-primary", target "blank_", href "https://doc.komet.finance" ] [ text "Documentation" ]
+            , a [ class "nav-link text-primary", target "blank_", href "https://doc.komet.capital" ] [ text "Documentation" ]
             , wallet
                 |> RemoteData.toMaybe
                 |> viewMaybe (viewAddress images)
@@ -280,7 +280,7 @@ appFooter images =
                 , div [ class "ml-auto" ]
                     [ ul [ class "list-inline" ]
                         [ li [ class "mr-0 list-inline-item" ]
-                            [ a [ class "nav-link text-primary", href "https://financekomet.medium.com", target "_blank" ]
+                            [ a [ class "nav-link text-primary", href "https://kometcapital.medium.com", target "_blank" ]
                                 [ img [ src images.medium, attribute "width" "26" ]
                                     []
                                 , span [ class "sr-only" ]
@@ -296,7 +296,7 @@ appFooter images =
                                 ]
                             ]
                         , li [ class "mr-0 list-inline-item" ]
-                            [ a [ class "nav-link text-primary", href "https://twitter.com/FinanceKomet", target "_blank" ]
+                            [ a [ class "nav-link text-primary", href "https://twitter.com/KometCapital", target "_blank" ]
                                 [ img [ src images.twitter, attribute "width" "26" ]
                                     []
                                 , span [ class "sr-only" ]
