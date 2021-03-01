@@ -1,7 +1,7 @@
 {
-  "name": "app.komet.finance",
+  "name": "app.komet.capital",
   "version": "1.0.0",
-  "description": "the actual app for komet.finance",
+  "description": "the actual app for komet.capital",
   "main": "src/index.html",
   "scripts": {
     "start": "parcel src/index.html",
